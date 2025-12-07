@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Product Detail Page</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ff9900",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#1d160c",
+                        "text-light": "#1d160c",
+                        "text-dark": "#f8f7f5",
+                        "text-muted-light": "#a17c45",
+                        "text-muted-dark": "#a17c45",
+                        "surface-light": "#f4efe6",
+                        "surface-dark": "#2a2216",
+                        "border-light": "#f4efe6",
+                        "border-dark": "#3a3022",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+
+<body class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark">
+    <div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+        <div class="layout-container flex h-full grow flex-col">
+            <header
+                class="flex items-center justify-between whitespace-nowrap border-b border-solid border-border-light dark:border-border-dark px-6 lg:px-10 py-3 sticky top-0 z-50 bg-background-light dark:bg-background-dark w-full">
+                <div class="flex items-center gap-8">
+                    <div class="flex items-center gap-4 text-text-light dark:text-text-dark">
+                        <div class="size-6 text-primary">
+                            <svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M24 45.8096C19.6865 45.8096 15.4698 44.5305 11.8832 42.134C8.29667 39.7376 5.50128 36.3314 3.85056 32.3462C2.19985 28.361 1.76794 23.9758 2.60947 19.7452C3.451 15.5145 5.52816 11.6284 8.57829 8.5783C11.6284 5.52817 15.5145 3.45101 19.7452 2.60948C23.9758 1.76795 28.361 2.19986 32.3462 3.85057C36.3314 5.50129 39.7376 8.29668 42.134 11.8833C44.5305 15.4698 45.8096 19.6865 45.8096 24L24 24L24 45.8096Z"
+                                    fill="currentColor"></path>
+                            </svg>
+                        </div>
+                        <h2
+                            class="text-text-light dark:text-text-dark text-lg font-bold leading-tight tracking-[-0.015em]">
+                            PrimeCommerce</h2>
+                    </div>
+                    <label class="hidden lg:flex flex-col min-w-40 !h-10 max-w-64">
+                        <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+                            <div
+                                class="text-text-muted-light dark:text-text-muted-dark flex border-none bg-surface-light dark:bg-surface-dark items-center justify-center pl-4 rounded-l-lg border-r-0">
+                                <span class="material-symbols-outlined">search</span>
+                            </div>
+                            <input
+                                class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-0 border-none bg-surface-light dark:bg-surface-dark focus:border-none h-full placeholder:text-text-muted-light dark:placeholder:text-text-muted-dark px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal"
+                                placeholder="Search" value="" />
+                        </div>
+                    </label>
+                </div>
+                <div class="flex flex-1 justify-end gap-2 lg:gap-8">
+                    <div class="hidden xl:flex items-center gap-9">
+                        <a class="text-text-light dark:text-text-dark text-sm font-medium leading-normal"
+                            href="#">Today's Deals</a>
+                        <a class="text-text-light dark:text-text-dark text-sm font-medium leading-normal"
+                            href="#">Customer Service</a>
+                        <a class="text-text-light dark:text-text-dark text-sm font-medium leading-normal" href="#">Gift
+                            Cards</a>
+                        <a class="text-text-light dark:text-text-dark text-sm font-medium leading-normal"
+                            href="#">Sell</a>
+                    </div>
+                    <div class="flex gap-2">
+                        <button
+                            class="hidden md:flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-surface-light dark:bg-surface-dark text-text-light dark:text-text-dark text-sm font-bold leading-normal tracking-[0.015em]">
+                            <span class="truncate">Sign In</span>
+                        </button>
+                        <button
+                            class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 bg-surface-light dark:bg-surface-dark text-text-light dark:text-text-dark gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5">
+                            <span class="material-symbols-outlined">shopping_cart</span>
+                            <span class="hidden md:inline">Cart</span>
+                        </button>
+                    </div>
+                    <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
+                        data-alt="User profile picture"
+                        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBwbRCkyvJ9mKlAov1US1YJHfNFd8C-4F7EoHvvG6yN5VGOlMe50Zzx98iPupSkpOE3kIdFM5H4lKJKjoO3O4A3yxMx413PHonM1c1M0ZV7WyMn9XjUvlUQS8rzRUEGYwS9t55M5Kq47cWS5M9F3bsXa5CTKhRDR3R5ULuZN_6mAt2_l8PraPCcsXUAcKpj-sxy2viLg8S5iycZDuuq6iKY1Q1Y03njoS8gZT6SIIR6T8V-bxHUnhZfOIAFU-8p8qrJFGo-v5AVb3A");'>
+                    </div>
+                </div>
+            </header>
+            <main class="px-4 sm:px-6 lg:px-10 flex flex-1 justify-center py-5">
+                <div class="layout-content-container flex flex-col max-w-7xl flex-1">
+                    <div class="flex flex-wrap gap-2 p-4">
+                        <a class="text-text-muted-light dark:text-text-muted-dark hover:text-primary text-sm font-medium leading-normal"
+                            href="#">Electronics</a>
+                        <span
+                            class="text-text-muted-light dark:text-text-muted-dark text-sm font-medium leading-normal">/</span>
+                        <a class="text-text-muted-light dark:text-text-muted-dark hover:text-primary text-sm font-medium leading-normal"
+                            href="#">Computers &amp; Accessories</a>
+                        <span
+                            class="text-text-muted-light dark:text-text-muted-dark text-sm font-medium leading-normal">/</span>
+                        <a class="text-text-muted-light dark:text-text-muted-dark hover:text-primary text-sm font-medium leading-normal"
+                            href="#">Monitors</a>
+                        <span
+                            class="text-text-muted-light dark:text-text-muted-dark text-sm font-medium leading-normal">/</span>
+                        <span class="text-text-light dark:text-text-dark text-sm font-medium leading-normal">Gaming
+                            Monitors</span>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-10 gap-8">
+                        <div class="lg:col-span-6 flex flex-col md:flex-row gap-4">
+                            <div class="flex md:flex-col gap-2 order-2 md:order-1 overflow-x-auto pb-2 md:pb-0">
+                                <img class="w-16 h-16 object-cover rounded-lg cursor-pointer border-2 border-primary"
+                                    data-alt="Gaming monitor front view"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6YuoF898odoxJannP1Foc563qJbXLN4YlcRSLcyjIEqsXQBOjAC-tFltyl2sQTMno-wu5Dtrd3Gr-XSsj3ECM4a-xT_38pTh5H9JShWevgob9VjqjPHpSg4Tq5P4vbhuOOAEja-2aH9SkRmkvF7l6j5SQ7Qg39Gy19zgIFzHBgH-dGODEUM-MaCEDmNLCdaYz8i74EwFmgwh8x4VD3H6jyUhudb8v3gmtrROkQb6k13wyQiBoGqdf5cZMW-jhCTqYc3-nV8KJ7Ew" />
+                                <img class="w-16 h-16 object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-primary"
+                                    data-alt="Gaming monitor side view"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyZSbqFraleR-pMPCtAf6lt0yy4RIlvTQnpT4kuHgExeGrhkJpN5AZmYVJHa1Qs_Nxr79aUdCf5o6H3QpHH5dIeuatfR4b6znV1vpPKd8KKU0xIM1gIfsJ6oKRMq773hDhdLfn9A-IUO19hZYS8FwDaT9M3eGiylnK0DOYO-0fPGXICnWzNPwAo9ovm0iSmyhAyapK9ny8_IorIPDX2gXRSt2ca6Ee_-c8Yqp38CxSJ-6cDf5kGPyknL8vwaoe43FHcMxAEoHinEg" />
+                                <img class="w-16 h-16 object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-primary"
+                                    data-alt="Gaming monitor back view"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAs4ibcgh5kg1qa1GcXMbIyUp2jv44Ynf6EUjBu-JG_uVaVpNgthQjOYC6WG23aiPiXF41vVlASRTVHgBnxsIag9xjTZ-IAKd9gG6yidb4qUauxK3dMMFIFCVocMU9p8Tbx3FgT-4MLTfpFwXT5ujyoGKkSdwEmtCBluiICm_T1IyOuZ6q6Pnp_JY99PM-sk1EIGBwiIC_S5SRGy8sV-d3jaSilMjUrGjH2dVmGDyaZyj2-adXZZ_nl_lBcFRFHN3wa43hSKrwtAsg" />
+                                <img class="w-16 h-16 object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-primary"
+                                    data-alt="Gaming monitor close up of ports"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHhZj9B8J_-nmIPrRE4ZRGXnK4SwNMYdOHzGHLv0tvICH-QJPs8MQpMVe3Is-4DnswTlJq0lzskyR0pCjzKYcdxFV-d9or9pk8Y4nE6KNMjisjX1xZ67oOv__aHffZtrUT_hF0BcfDxjel2T8MET9x9KMrGBokFIE4oq29R1GRzt_6AmhA78gDZxRtiBIz6p86lIAUCWuwu13KfWCqrFDpLIrhre-60nQUrVHMT0Y5Ai00iud4oYjMqv1GxmthqsXzK_oRdkviCiw" />
+                                <img class="w-16 h-16 object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-primary"
+                                    data-alt="Lifestyle image of monitor in a gaming setup"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7z1SIdN2RIBZ4WoFp6cyljOIg8KYe6faWYm_4MeOQEqWdl9GDrBCKfWQF-xAnt2QuPWelAo68stVtg5524tsCRGgOE7X4I64nLrhrRcsycrPUKnboim8tmr1wQvrodvFLTY_kBXUXZawRDFoCa9JXM5iL88qLmrq9Fgy0qrg6v5arAKq9sxf4KRq5azGJu7GVfAEdZBPmnvQ-QoBStE8gc8hgnGlhCnZ6dA-D9KEMsQQkZFn8_In8wc8JXg8SrLhaN4YJibzfWBQ" />
+                            </div>
+                            <div class="w-full flex-1 order-1 md:order-2">
+                                <div class="w-full bg-center bg-no-repeat bg-cover flex flex-col justify-end overflow-hidden rounded-xl aspect-square"
+                                    data-alt="Large hero image of the gaming monitor"
+                                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBiAXrjKwLLjv4gdoJ78V_MYZ4MoOGXO4sBBKYemMAZBEGMAME4jObCNs_uOlkfuGCK3MOZ7GJnkH_0fpEtXeCEh3rOtbssQigTrRHBoPyP1ok5cBPLF4KnO8PpXnfuVpjBUQUDoT-fqCDdyYG9sfugLqVHqU69ycpMz0oayn7RDAVYeB18dYEDmktpgdDCg8sq_HiyloD8pxjnQ61nyq3wTpePm0Sg2Ge2oojfd68PUGeSAf0PjS2KGPkbafhLFeVyAl6DHm2ispY");'>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="lg:col-span-4">
+                            <h1
+                                class="text-text-light dark:text-text-dark tracking-tight text-2xl font-bold leading-tight">
+                                Quantum Gaming Monitor 32-inch Curved 144Hz</h1>
+                            <a class="text-blue-500 hover:text-primary text-sm" href="#">Visit the Quantum Store</a>
+                            <div class="flex items-center gap-2 mt-2">
+                                <span class="font-bold">4.6</span>
+                                <div class="flex gap-0.5 text-primary">
+                                    <span class="material-symbols-outlined !text-base">star</span>
+                                    <span class="material-symbols-outlined !text-base">star</span>
+                                    <span class="material-symbols-outlined !text-base">star</span>
+                                    <span class="material-symbols-outlined !text-base">star</span>
+                                    <span class="material-symbols-outlined !text-base"
+                                        style="font-variation-settings: 'FILL' 0;">star_half</span>
+                                </div>
+                                <a class="text-blue-500 hover:text-primary text-sm" href="#reviews">1,284 ratings</a>
+                            </div>
+                            <div class="my-4 py-4 border-y border-border-light dark:border-border-dark">
+                                <div class="flex items-baseline gap-2">
+                                    <span class="text-sm -translate-y-1.5 text-red-700 dark:text-red-500">-15%</span>
+                                    <span class="text-3xl font-medium text-red-700 dark:text-red-500">$339</span>
+                                    <span class="text-3xl font-medium text-red-700 dark:text-red-500">99</span>
+                                </div>
+                                <p class="text-sm text-text-muted-light dark:text-text-muted-dark">List Price: <span
+                                        class="line-through">$399.99</span></p>
+                                <p class="text-sm mt-1">Save <span
+                                        class="font-bold text-green-700 dark:text-green-500">$60.00</span></p>
+                                <div class="flex items-center gap-1.5 mt-2">
+                                    <img class="h-4" data-alt="Prime logo"
+                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBa3JdxzaGcTJbBeAO3HxlkeZCyt82HgjpTtnlpkqN-dVrv3N5KuxhnBqqnqWnbgAAsP0aNIfKtrZO96jeiBJHuUg26Xh2imhjNXk7-w_UaIycjG_ebvr0ZQXIgdN5Y94vZLZOvs8T8VEnFJoTVOMpA3JJIeEKQWAwLj4I1l_azBpApoiSlldU9ulEhA9yxXrTq292ZehB1BYX9jaw267WHc0QlAavP_4Pt7_-4iNtoMEP2KszZKFjnubj_p-7JhV7TtNLefOEHRg" />
+                                    <span class="text-text-light dark:text-text-dark text-sm">FREE delivery <span
+                                            class="font-bold">Tomorrow, Oct 27</span></span>
+                                </div>
+                            </div>
+                            <div class="p-4 border border-border-light dark:border-border-dark rounded-xl">
+                                <p class="text-lg font-bold text-green-700 dark:text-green-500">In Stock</p>
+                                <p class="text-sm mt-2">Ships from: <span class="font-semibold">PrimeCommerce.com</span>
+                                </p>
+                                <p class="text-sm">Sold by: <span class="font-semibold">Quantum Electronics</span></p>
+                                <div class="mt-4 flex items-center gap-2">
+                                    <label class="text-sm font-medium" for="quantity">Qty:</label>
+                                    <select
+                                        class="form-select w-20 h-8 text-sm rounded-lg bg-surface-light dark:bg-surface-dark border-border-light dark:border-border-dark focus:ring-primary focus:border-primary"
+                                        id="quantity">
+                                        <option>1</option>
+                                        <option>2</option>
+                                        <option>3</option>
+                                        <option>4</option>
+                                        <option>5</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col gap-3 mt-4">
+                                    <button
+                                        class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-11 px-6 bg-primary text-text-light dark:text-background-dark text-base font-medium leading-normal tracking-[0.015em] hover:brightness-90 transition-all">
+                                        <span class="truncate">Add to Cart</span>
+                                    </button>
+                                    <button
+                                        class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-11 px-6 bg-orange-300 dark:bg-orange-700 text-text-light dark:text-text-dark text-base font-medium leading-normal tracking-[0.015em] hover:brightness-90 transition-all">
+                                        <span class="truncate">Buy Now</span>
+                                    </button>
+                                </div>
+                                <div
+                                    class="flex items-center gap-2 mt-4 text-sm text-text-muted-light dark:text-text-muted-dark">
+                                    <span class="material-symbols-outlined !text-base">lock</span>
+                                    <span>Secure transaction</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="my-10 border-t border-border-light dark:border-border-dark pt-8">
+                        <h2 class="text-text-light dark:text-text-dark tracking-light text-xl font-bold">Product
+                            information</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mt-4 text-sm">
+                            <div><span class="font-bold w-40 inline-block">Screen Size</span><span>32 Inches</span>
+                            </div>
+                            <div><span class="font-bold w-40 inline-block">Brand</span><span>Quantum</span></div>
+                            <div><span class="font-bold w-40 inline-block">Resolution</span><span>2560 x 1440</span>
+                            </div>
+                            <div><span class="font-bold w-40 inline-block">Refresh Rate</span><span>144 Hz</span></div>
+                            <div><span class="font-bold w-40 inline-block">Response Time</span><span>1 ms</span></div>
+                            <div><span class="font-bold w-40 inline-block">Panel Type</span><span>VA, Curved</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="my-10 border-t border-border-light dark:border-border-dark pt-8" id="reviews">
+                        <h2
+                            class="text-text-light dark:text-text-dark tracking-light text-xl font-bold leading-tight pb-3">
+                            Customer Reviews</h2>
+                        <div
+                            class="flex flex-col md:flex-row flex-wrap gap-x-8 gap-y-6 p-4 border border-border-light dark:border-border-dark rounded-xl bg-surface-light dark:bg-surface-dark/50">
+                            <div class="flex flex-col gap-2">
+                                <p
+                                    class="text-text-light dark:text-text-dark text-4xl font-black leading-tight tracking-[-0.033em]">
+                                    4.6</p>
+                                <div class="flex gap-0.5">
+                                    <div class="text-primary"><span
+                                            class="material-symbols-outlined !text-lg">star</span></div>
+                                    <div class="text-primary"><span
+                                            class="material-symbols-outlined !text-lg">star</span></div>
+                                    <div class="text-primary"><span
+                                            class="material-symbols-outlined !text-lg">star</span></div>
+                                    <div class="text-primary"><span
+                                            class="material-symbols-outlined !text-lg">star</span></div>
+                                    <div class="text-primary"><span class="material-symbols-outlined !text-lg"
+                                            style="font-variation-settings: 'FILL' 0;">star_half</span></div>
+                                </div>
+                                <p class="text-text-light dark:text-text-dark text-base font-normal leading-normal">
+                                    1,284 reviews</p>
+                            </div>
+                            <div
+                                class="grid min-w-[200px] max-w-[400px] flex-1 grid-cols-[20px_1fr_40px] items-center gap-y-3">
+                                <p class="text-text-light dark:text-text-dark text-sm font-normal leading-normal">5</p>
+                                <div
+                                    class="flex h-2 flex-1 overflow-hidden rounded-full bg-border-light dark:bg-border-dark">
+                                    <div class="rounded-full bg-primary" style="width: 75%;"></div>
+                                </div>
+                                <p
+                                    class="text-text-muted-light dark:text-text-muted-dark text-sm font-normal leading-normal text-right">
+                                    75%</p>
+                                <p class="text-text-light dark:text-text-dark text-sm font-normal leading-normal">4</p>
+                                <div
+                                    class="flex h-2 flex-1 overflow-hidden rounded-full bg-border-light dark:bg-border-dark">
+                                    <div class="rounded-full bg-primary" style="width: 15%;"></div>
+                                </div>
+                                <p
+                                    class="text-text-muted-light dark:text-text-muted-dark text-sm font-normal leading-normal text-right">
+                                    15%</p>
+                                <p class="text-text-light dark:text-text-dark text-sm font-normal leading-normal">3</p>
+                                <div
+                                    class="flex h-2 flex-1 overflow-hidden rounded-full bg-border-light dark:bg-border-dark">
+                                    <div class="rounded-full bg-primary" style="width: 5%;"></div>
+                                </div>
+                                <p
+                                    class="text-text-muted-light dark:text-text-muted-dark text-sm font-normal leading-normal text-right">
+                                    5%</p>
+                                <p class="text-text-light dark:text-text-dark text-sm font-normal leading-normal">2</p>
+                                <div
+                                    class="flex h-2 flex-1 overflow-hidden rounded-full bg-border-light dark:bg-border-dark">
+                                    <div class="rounded-full bg-primary" style="width: 2%;"></div>
+                                </div>
+                                <p
+                                    class="text-text-muted-light dark:text-text-muted-dark text-sm font-normal leading-normal text-right">
+                                    2%</p>
+                                <p class="text-text-light dark:text-text-dark text-sm font-normal leading-normal">1</p>
+                                <div
+                                    class="flex h-2 flex-1 overflow-hidden rounded-full bg-border-light dark:bg-border-dark">
+                                    <div class="rounded-full bg-primary" style="width: 3%;"></div>
+                                </div>
+                                <p
+                                    class="text-text-muted-light dark:text-text-muted-dark text-sm font-normal leading-normal text-right">
+                                    3%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+</body>
+
+</html>
