@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Header: React.FC = () => {
   return (
@@ -6,7 +7,9 @@ const Header: React.FC = () => {
       <div className="flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-2">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-4xl text-orange-500">storefront</span>
-          <h2 className="text-2xl font-bold leading-tight tracking-[-0.015em] text-gray-800">Shopazon</h2>
+          <Link to="/">
+            <h2 className="text-2xl font-bold leading-tight tracking-[-0.015em] text-gray-800 cursor-pointer">Shopazon</h2>
+          </Link>
         </div>
         <div className="hidden flex-1 items-center px-4 lg:flex">
           <label className="flex w-full flex-col">
@@ -43,6 +46,8 @@ const Header: React.FC = () => {
         </div>
       </div>
       <div className="flex w-full max-w-7xl items-center gap-6 px-4 pb-2 pt-1 text-sm font-medium">
+        <Link className="rounded px-1 hover:bg-gray-100 text-gray-700" to="/">Home</Link>
+        <Link className="rounded px-1 hover:bg-gray-100 text-gray-700" to="/about">About</Link>
         <a className="rounded px-1 hover:bg-gray-100 text-gray-700" href="#">Today's Deals</a>
         <a className="rounded px-1 hover:bg-gray-100 text-gray-700" href="#">Electronics</a>
         <a className="rounded px-1 hover:bg-gray-100 text-gray-700" href="#">Books</a>
