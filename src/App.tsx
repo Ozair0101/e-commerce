@@ -13,7 +13,7 @@ function App() {
         style={{ fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'" }}
       >
         <Header />
-        <main className="flex w-full flex-1 flex-col items-center">
+        <main className="flex w-full flex-col items-center flex-1">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
