@@ -1,4 +1,8 @@
 import React from 'react';
+import heroImage from '../assets/6.jpg';
+import customer1 from '../assets/2.jpg';
+import customer2 from '../assets/3.jpg';
+import customer3 from '../assets/4.jpg';
 
 const HeroSection: React.FC = () => {
     return (
@@ -36,16 +40,16 @@ const HeroSection: React.FC = () => {
                             <div className="flex -space-x-3">
                                 <img alt="Customer avatar"
                                     className="size-8 rounded-full border-2 border-gray-300 bg-gray-200"
-                                    data-alt="Portrait of a smiling young woman"
-                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtjbL5z0n5jzk7D_cAB6WxQRzwMRE6XjHzNUEwzRm8pB-4uZ8s54-XsQaaBwMgPz_CQP49bRRF85ru2qiPJiSob4LvqXHQ4tLepc4tAmJLIfnq6OaOix2WuRFAjgVuj3xC4SOHqlsr-N0N3h4tiIe60hFysGiudnbOJZAyz0t-y17EGH02bnvtB_xypGzaBXcEeMoQg4UPAHmnAIaCd5Svx21-QMaxYTQ6kK6-ARCQOhakXR3CTzvveO9JDsazqHQGQeHCCoBm8rDS" />
+                                    src={customer1}
+                                />
                                 <img alt="Customer avatar"
                                     className="size-8 rounded-full border-2 border-gray-300 bg-gray-200"
-                                    data-alt="Portrait of a man with glasses"
-                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkaaMYWZGstP8vLKq-77fsp37YHV-3afU9uWadyQMnzQ6J8OHmVywOrQA2wBOZsD0CBsgIMZwMwvR75s59GLZyGAv30dFGodhXq3TYnoUGiu9f6v0n1JbvNzuo_mxBMq85hg8sfmd8mBx9JHjY6YdszYpV99Mo9pGAAWWsWxl4ynaRWav3wxJOYC3eCJSz-Xfb3M0xwHZNtZc7KA4TGTIN3prj7fhupIDEfUaDy1u-bCBr4XAFLQYvL2yV2-dIRCw7-nUbcUd_Xcfz" />
+                                    src={customer2}
+                                />
                                 <img alt="Customer avatar"
                                     className="size-8 rounded-full border-2 border-gray-300 bg-gray-200"
-                                    data-alt="Portrait of a smiling man"
-                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8L2cZAIoYX2DaX_IDt15thuxjEyhWLu80io_5MeS_Q6Oj4Ewvuv9uyyzYoyB4tutl_s-ddBgMobnOuNf3jnmWqFCY3d2FelvrGn6ckG3RYn1zmUypqsJG4yi3_d6bZBntrUF3DoqXGdEjbHn_D4G10tJnTsW_kfZAPc8jz2xGmVxkt012nFmUa_W39dkq1hMVlbWLDTbEefKvhNXgK6VHek57Wjik16gOfzNo-N4uzqlPUwKTHJNegzzG1z86WBfl2sthUyqXuGZz" />
+                                    src={customer3}
+                                />
                                 <div
                                     className="size-8 rounded-full border-2 border-gray-300 bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-800">
                                     4k+</div>
@@ -74,11 +78,10 @@ const HeroSection: React.FC = () => {
                             <div
                                 className="relative h-full w-full rounded-[2.5rem] overflow-hidden border border-gray-300 shadow-2xl bg-gray-50 group">
                                 <div className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-700 group-hover:scale-105"
-                                    data-alt="Modern white smartwatch and accessories on a sleek surface"
-                                    style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuAjwq6fDnnswyrBViyULi5IA6tf2RUXLDSg5sj4eyzyWrkTS1pJQIc7XQp4sLPTlZTjW5f4bEeP1Z9HAv1ACa88Ths2tNyApQnz0k7ZBiKFXgSKNzmY2WYVKlZMOnafRGa-E0riZDKYv3mP2bIdOempTfCn4oryxSfro6OGtqYYVPR-ok59a7l1u9qI1-9Ux4HMSzXQ2DXGkT8ajjE4qPCfI-9sjZteFHJHMXg_lfxp9rRd0MVtN6vrPFBNGNNd8p2w7ZqrCozUC5lg");' }}>
+                                    style={{ backgroundImage: `url(${heroImage})` }}>
                                 </div>
                                 {/* Floating Detail Card */}
-                                <div
+                                {/* <div
                                     className="absolute bottom-6 left-6 right-6 p-4 rounded-xl bg-white/80 backdrop-blur-md border border-gray-300 flex items-center justify-between">
                                     <div className="flex flex-col">
                                         <span className="text-gray-800 font-bold text-sm">Series 7 Smartwatch</span>
@@ -88,7 +91,7 @@ const HeroSection: React.FC = () => {
                                         className="size-8 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-orange-500 transition-colors">
                                         <span className="material-symbols-outlined text-[18px]">add</span>
                                     </button>
-                                </div>
+                                </div> */}
                             </div>
                         </div>
                     </div>
