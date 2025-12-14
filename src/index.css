@@ -1,3 +1,20 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-primary: #232F3E;
+  --color-secondary: #ff9900;
+}
+
+@layer base {
+  body {
+    @apply bg-[#f8f7f5] text-[#333333];
+  }
+  
+  .dark {
+    @apply bg-[#1a2533] text-[#E0E0E0];
+  }
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
