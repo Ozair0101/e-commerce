@@ -8,7 +8,7 @@ interface CarouselProps {
 
 const Carousel: React.FC<CarouselProps> = ({ title, subtitle, image }) => {
   return (
-    <div className="w-full bg-gray-200 dark:bg-gray-800 p-4">
+    <div className="w-full bg-gray-100 p-4">
       <div className="relative w-full overflow-hidden rounded-lg">
         <div className="flex transition-transform duration-700 ease-in-out">
           <div
