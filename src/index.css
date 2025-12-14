@@ -11,11 +11,7 @@
 
 @layer base {
   body {
-    @apply bg-[#f8f7f5] text-[#333333];
-  }
-  
-  .dark {
-    @apply bg-[#1a2533] text-[#E0E0E0];
+    @apply bg-white text-gray-800;
   }
 }
 
