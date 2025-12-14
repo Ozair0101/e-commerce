@@ -1,4 +1,5 @@
 import React from 'react';
+import HeroSection from '../components/HeroSection';
 import Carousel from '../components/Carousel';
 import TopSellers from '../components/TopSellers';
 import Categories from '../components/Categories';
@@ -107,6 +108,8 @@ const Home: React.FC = () => {
   return (
     <div className="flex w-full flex-1 flex-col items-center">
       <div className="flex w-full max-w-7xl flex-col">
+        {/* Hero Section */}
+        <HeroSection />
         <Carousel
           title="Featured Deals of the Week"
           subtitle="Don't miss out on these limited-time offers"
