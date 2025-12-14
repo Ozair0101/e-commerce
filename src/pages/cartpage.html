@@ -301,3 +301,318 @@
 </body>
 
 </html>
+
+
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Shopazon - Upgrade Your Daily Drive</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700;900&amp;family=Spline+Sans:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Material Symbols -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Theme Config -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2bee79",
+                        "background-light": "#f6f8f7",
+                        "background-dark": "#102217",
+                        "surface-dark": "#1c2e24",
+                        "border-dark": "#28392f",
+                        "text-secondary": "#9db9a8"
+                    },
+                    fontFamily: {
+                        "display": ["Spline Sans", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for better aesthetic */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #102217;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #28392f;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2bee79;
+        }
+    </style>
+</head>
+
+<body
+    class="font-display antialiased text-slate-900 dark:text-white bg-background-light dark:bg-background-dark min-h-screen flex flex-col">
+    <!-- Top Navigation -->
+    <header class="w-full border-b border-solid border-border-dark bg-background-dark sticky top-0 z-50">
+        <div class="max-w-[1440px] mx-auto px-5 md:px-10 py-3 flex items-center justify-between">
+            <!-- Logo & Nav Links -->
+            <div class="flex items-center gap-8">
+                <a class="flex items-center gap-2 text-white group hover:opacity-80 transition-opacity" href="#">
+                    <div class="size-8 flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined !text-3xl">eco</span>
+                    </div>
+                    <h2 class="text-white text-xl font-bold tracking-tight">Shopazon</h2>
+                </a>
+                <nav class="hidden md:flex items-center gap-6">
+                    <a class="text-white text-sm font-medium hover:text-primary transition-colors" href="#">Products</a>
+                    <a class="text-white text-sm font-medium hover:text-primary transition-colors" href="#">Deals</a>
+                    <a class="text-white text-sm font-medium hover:text-primary transition-colors" href="#">Support</a>
+                </nav>
+            </div>
+            <!-- Search & Actions -->
+            <div class="flex flex-1 justify-end gap-4 md:gap-8">
+                <!-- Search Bar -->
+                <div class="hidden md:flex flex-col min-w-40 w-full max-w-xs h-10">
+                    <div
+                        class="flex w-full h-full items-center rounded-xl bg-surface-dark border border-border-dark focus-within:border-primary transition-colors overflow-hidden">
+                        <div class="flex items-center justify-center pl-3 text-text-secondary">
+                            <span class="material-symbols-outlined text-[20px]">search</span>
+                        </div>
+                        <input
+                            class="w-full bg-transparent border-none focus:ring-0 text-white placeholder:text-text-secondary text-sm px-3 font-normal"
+                            placeholder="Search products..." />
+                    </div>
+                </div>
+                <!-- Action Buttons -->
+                <div class="flex gap-3">
+                    <button
+                        class="hidden sm:flex h-10 items-center justify-center px-6 rounded-full bg-primary hover:bg-[#1fd668] text-background-dark text-sm font-bold transition-colors">
+                        Sign In
+                    </button>
+                    <button
+                        class="size-10 flex items-center justify-center rounded-full bg-surface-dark text-white hover:text-primary hover:bg-border-dark transition-all border border-border-dark relative">
+                        <span class="material-symbols-outlined text-[20px]">shopping_cart</span>
+                        <span
+                            class="absolute top-0 right-0 size-2.5 bg-primary rounded-full border border-background-dark"></span>
+                    </button>
+                    <!-- Mobile Menu Toggle -->
+                    <button
+                        class="md:hidden size-10 flex items-center justify-center rounded-full bg-surface-dark text-white hover:bg-border-dark transition-all border border-border-dark">
+                        <span class="material-symbols-outlined text-[20px]">menu</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- Main Content Wrapper -->
+    <main class="flex-grow flex flex-col items-center">
+        <!-- Hero Section -->
+        <section class="w-full max-w-[1440px] px-5 md:px-10 py-8 md:py-16">
+            <div class="@container">
+                <div class="flex flex-col-reverse lg:flex-row gap-10 lg:gap-20 items-center">
+                    <!-- Text Content -->
+                    <div
+                        class="flex flex-col gap-8 flex-1 max-w-2xl text-center lg:text-left items-center lg:items-start">
+                        <div class="flex flex-col gap-4">
+                            <span class="text-primary font-bold tracking-wider uppercase text-xs md:text-sm">New Season
+                                Collection</span>
+                            <h1
+                                class="text-white text-4xl md:text-6xl lg:text-7xl font-display font-black leading-[1.1] tracking-tight">
+                                Upgrade Your <br /><span class="text-primary">Daily Drive.</span>
+                            </h1>
+                            <h2
+                                class="text-text-secondary text-lg md:text-xl font-normal leading-relaxed max-w-lg mx-auto lg:mx-0">
+                                Experience the new standard in lifestyle essentials. Premium quality, unbeatable prices,
+                                and lighting-fast delivery straight to your door.
+                            </h2>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                            <button
+                                class="h-12 px-8 rounded-full bg-primary hover:bg-[#1fd668] text-background-dark text-base font-bold transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(43,238,121,0.3)]">
+                                Shop New Arrivals
+                            </button>
+                            <button
+                                class="h-12 px-8 rounded-full bg-surface-dark border border-border-dark text-white hover:bg-border-dark text-base font-bold transition-colors flex items-center justify-center gap-2">
+                                <span>View Deals</span>
+                                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-6 mt-2">
+                            <div class="flex -space-x-3">
+                                <img alt="Customer avatar"
+                                    class="size-8 rounded-full border-2 border-background-dark bg-gray-500"
+                                    data-alt="Portrait of a smiling young woman"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtjbL5z0n5jzk7D_cAB6WxQRzwMRE6XjHzNUEwzRm8pB-4uZ8s54-XsQaaBwMgPz_CQP49bRRF85ru2qiPJiSob4LvqXHQ4tLepc4tAmJLIfnq6OaOix2WuRFAjgVuj3xC4SOHqlsr-N0N3h4tiIe60hFysGiudnbOJZAyz0t-y17EGH02bnvtB_xypGzaBXcEeMoQg4UPAHmnAIaCd5Svx21-QMaxYTQ6kK6-ARCQOhakXR3CTzvveO9JDsazqHQGQeHCCoBm8rDS" />
+                                <img alt="Customer avatar"
+                                    class="size-8 rounded-full border-2 border-background-dark bg-gray-500"
+                                    data-alt="Portrait of a man with glasses"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkaaMYWZGstP8vLKq-77fsp37YHV-3afU9uWadyQMnzQ6J8OHmVywOrQA2wBOZsD0CBsgIMZwMwvR75s59GLZyGAv30dFGodhXq3TYnoUGiu9f6v0n1JbvNzuo_mxBMq85hg8sfmd8mBx9JHjY6YdszYpV99Mo9pGAAWWsWxl4ynaRWav3wxJOYC3eCJSz-Xfb3M3xwHZNtZc7KA4TGTIN3prj7fhupIDEfUaDy1u-bCBr4XAFLQYvL2yV2-dIRCw7-nUbcUd_Xcfz" />
+                                <img alt="Customer avatar"
+                                    class="size-8 rounded-full border-2 border-background-dark bg-gray-500"
+                                    data-alt="Portrait of a smiling man"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8L2cZAIoYX2DaX_IDt15thuxjEyhWLu80io_5MeS_Q6Oj4Ewvuv9uyyzYoyB4tutl_s-ddBgMobnOuNf3jnmWqFCY3d2FelvrGn6ckG3RYn1zmUypqsJG4yi3_d6bZBntrUF3DoqXGdEjbHn_D4G10tJnTsW_kfZAPc8jz2xGmVxkt012nFmUa_W39dkq1hMVlbWLDTbEefKvhNXgK6VHek57Wjik16gOfzNo-N4uzqlPUwKTHJNegzzG1z86WBfl2sthUyqXuGZz" />
+                                <div
+                                    class="size-8 rounded-full border-2 border-background-dark bg-surface-dark flex items-center justify-center text-[10px] font-bold text-white">
+                                    4k+</div>
+                            </div>
+                            <div class="flex flex-col">
+                                <div class="flex text-yellow-400 text-sm">
+                                    <span class="material-symbols-outlined text-[16px] fill-current">star</span>
+                                    <span class="material-symbols-outlined text-[16px] fill-current">star</span>
+                                    <span class="material-symbols-outlined text-[16px] fill-current">star</span>
+                                    <span class="material-symbols-outlined text-[16px] fill-current">star</span>
+                                    <span class="material-symbols-outlined text-[16px] fill-current">star</span>
+                                </div>
+                                <span class="text-text-secondary text-xs">Trusted by 4,000+ customers</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Image Content -->
+                    <div class="flex-1 w-full lg:h-auto relative">
+                        <div
+                            class="relative w-full aspect-square md:aspect-[4/3] lg:aspect-square max-h-[600px] mx-auto">
+                            <!-- Decorative blurred glow behind image -->
+                            <div
+                                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-primary/20 blur-[100px] rounded-full">
+                            </div>
+                            <!-- Main Hero Image -->
+                            <div
+                                class="relative h-full w-full rounded-[2.5rem] overflow-hidden border border-border-dark shadow-2xl bg-surface-dark group">
+                                <div class="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-700 group-hover:scale-105"
+                                    data-alt="Modern white smartwatch and accessories on a sleek surface"
+                                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAjwq6fDnnswyrBViyULi5IA6tf2RUXLDSg5sj4eyzyWrkTS1pJQIc7XQp4sLPTlZTjW5f4bEeP1Z9HAv1ACa88Ths2tNyApQnz0k7ZBiKFXgSKNzmY2WYVKlZMOnafRGa-E0riZDKYv3mP2bIdOempTfCn4oryxSfro6OGtqYYVPR-ok59a7l1u9qI1-9Ux4HMSzXQ2DXGkT8ajjE4qPCfI-9sjZteFHJHMXg_lfxp9rRd0MVtN6vrPFBNGNNd8p2w7ZqrCozUC5lg");'>
+                                </div>
+                                <!-- Floating Detail Card -->
+                                <div
+                                    class="absolute bottom-6 left-6 right-6 p-4 rounded-xl bg-background-dark/80 backdrop-blur-md border border-white/10 flex items-center justify-between">
+                                    <div class="flex flex-col">
+                                        <span class="text-white font-bold text-sm">Series 7 Smartwatch</span>
+                                        <span class="text-primary text-xs font-bold">$399.00</span>
+                                    </div>
+                                    <button
+                                        class="size-8 rounded-full bg-white text-black flex items-center justify-center hover:bg-primary transition-colors">
+                                        <span class="material-symbols-outlined text-[18px]">add</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Feature Section -->
+        <section class="w-full bg-surface-dark border-y border-border-dark">
+            <div class="max-w-[1440px] mx-auto px-5 md:px-10 py-16">
+                <div class="flex flex-col gap-12">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                        <div class="max-w-2xl">
+                            <h2 class="text-white text-3xl md:text-4xl font-bold mb-4">Why Shopazon?</h2>
+                            <p class="text-text-secondary text-lg">We bring the future of shopping to your doorstep with
+                                features designed for your modern lifestyle.</p>
+                        </div>
+                        <button class="text-primary font-bold flex items-center gap-1 hover:gap-2 transition-all">
+                            Learn more about us <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Feature 1 -->
+                        <div
+                            class="flex flex-col p-6 rounded-2xl bg-background-dark border border-border-dark hover:border-primary/50 transition-colors group">
+                            <div
+                                class="size-12 rounded-full bg-surface-dark flex items-center justify-center text-primary mb-6 group-hover:bg-primary group-hover:text-background-dark transition-colors">
+                                <span class="material-symbols-outlined text-3xl">local_shipping</span>
+                            </div>
+                            <h3 class="text-white text-xl font-bold mb-2">Free Shipping</h3>
+                            <p class="text-text-secondary">Enjoy free shipping on all orders over $50. We deliver fast,
+                                so you don't have to wait.</p>
+                        </div>
+                        <!-- Feature 2 -->
+                        <div
+                            class="flex flex-col p-6 rounded-2xl bg-background-dark border border-border-dark hover:border-primary/50 transition-colors group">
+                            <div
+                                class="size-12 rounded-full bg-surface-dark flex items-center justify-center text-primary mb-6 group-hover:bg-primary group-hover:text-background-dark transition-colors">
+                                <span class="material-symbols-outlined text-3xl">verified</span>
+                            </div>
+                            <h3 class="text-white text-xl font-bold mb-2">4.9 Star Rating</h3>
+                            <p class="text-text-secondary">Join millions of satisfied customers who trust us for quality
+                                products and service.</p>
+                        </div>
+                        <!-- Feature 3 -->
+                        <div
+                            class="flex flex-col p-6 rounded-2xl bg-background-dark border border-border-dark hover:border-primary/50 transition-colors group">
+                            <div
+                                class="size-12 rounded-full bg-surface-dark flex items-center justify-center text-primary mb-6 group-hover:bg-primary group-hover:text-background-dark transition-colors">
+                                <span class="material-symbols-outlined text-3xl">support_agent</span>
+                            </div>
+                            <h3 class="text-white text-xl font-bold mb-2">24/7 Support</h3>
+                            <p class="text-text-secondary">Our dedicated support team is always here to help you with
+                                any questions or concerns.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <!-- Footer -->
+    <footer class="w-full bg-background-dark border-t border-border-dark py-12">
+        <div class="max-w-[1440px] mx-auto px-5 md:px-10 flex flex-col items-center gap-8">
+            <div
+                class="flex items-center gap-2 text-white opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
+                <span class="material-symbols-outlined">eco</span>
+                <span class="font-bold text-lg">Shopazon</span>
+            </div>
+            <div class="flex flex-wrap justify-center gap-x-8 gap-y-4 text-center">
+                <a class="text-text-secondary hover:text-primary transition-colors text-sm" href="#">Privacy Policy</a>
+                <a class="text-text-secondary hover:text-primary transition-colors text-sm" href="#">Terms of
+                    Service</a>
+                <a class="text-text-secondary hover:text-primary transition-colors text-sm" href="#">Return Policy</a>
+                <a class="text-text-secondary hover:text-primary transition-colors text-sm" href="#">Contact Us</a>
+            </div>
+            <div class="flex gap-4">
+                <a class="size-10 flex items-center justify-center rounded-full bg-surface-dark text-text-secondary hover:text-white hover:bg-primary/20 transition-all"
+                    href="#">
+                    <span class="material-symbols-outlined text-[20px]">public</span>
+                    <!-- Generic Web/Twitter replacement -->
+                </a>
+                <a class="size-10 flex items-center justify-center rounded-full bg-surface-dark text-text-secondary hover:text-white hover:bg-primary/20 transition-all"
+                    href="#">
+                    <span class="material-symbols-outlined text-[20px]">photo_camera</span>
+                    <!-- Generic Instagram replacement -->
+                </a>
+                <a class="size-10 flex items-center justify-center rounded-full bg-surface-dark text-text-secondary hover:text-white hover:bg-primary/20 transition-all"
+                    href="#">
+                    <span class="material-symbols-outlined text-[20px]">groups</span>
+                    <!-- Generic Facebook replacement -->
+                </a>
+            </div>
+            <p class="text-text-secondary text-xs opacity-60">© 2023 Shopazon Inc. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+
+</html>
