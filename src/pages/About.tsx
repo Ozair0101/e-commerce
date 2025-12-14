@@ -1,4 +1,5 @@
 import React from 'react';
+import heroImage from '../assets/24.jpg';
 
 const About: React.FC = () => {
   return (
@@ -8,7 +9,7 @@ const About: React.FC = () => {
           {/* Hero Section */}
           <section className="w-full max-w-[1200px] px-4 md:px-10 py-5">
             <div className="@container">
-              <div className="flex flex-col gap-6 bg-cover bg-center bg-no-repeat rounded-xl md:rounded-[3rem] items-center justify-center p-8 md:p-20 min-h-[480px] relative overflow-hidden" style={{ backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.7) 100%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuAz_PZyoRMBWEPSUokX-z9iq64GhUJhd5ZofRLsZOSzb4a3ywqWdhD8MD9H4j8tju_lIvcSUBToip5sA6rZI0cpjmz-4y94E_BZBhuXyDZRLLAij9FUa3sASQ9-z8dA-5ODpK8aVYBNRqdAbGCqmk6nu7Uk-p9RKhcRR3_z8pGHBkhlMrwmXp2mPhKPSB54I28nQwFDips3n4kQlyTsQbFGvRscne8KYHbnJ2fD0_fGd_Ucz9E4CoJEblOpuF6iX5YvEKWtKIe4Ljle")' }}>
+              <div className="flex flex-col gap-6 bg-cover bg-center bg-no-repeat rounded-xl md:rounded-[3rem] items-center justify-center p-8 md:p-20 min-h-[480px] relative overflow-hidden" style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.7) 100%), url(${heroImage})` }}>
                 <div className="flex flex-col gap-4 text-center z-10 max-w-[700px]">
                   <h1 className="text-white text-4xl md:text-6xl font-black leading-tight tracking-[-0.033em]">
                     We are Shopazon
