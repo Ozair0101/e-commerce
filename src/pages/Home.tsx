@@ -5,10 +5,10 @@ import TopSellers from '../components/TopSellers';
 import Categories from '../components/Categories';
 import PromoBanner from '../components/PromoBanner';
 import TrendingRow from '../components/TrendingRow';
+import Feature from '../components/Feature';
 import type { Product } from '../components/ProductCard';
 import type { Category } from '../components/Categories';
 import type { TrendItem } from '../components/TrendingRow';
-import Feature from '../components/Feature';
 
 const Home: React.FC = () => {
   const carouselImage =
@@ -116,7 +116,7 @@ const Home: React.FC = () => {
           subtitle="Don't miss out on these limited-time offers"
           image={carouselImage}
         /> */}
-        <Feature />   
+        <Feature />
         <TopSellers products={products} />
         <Categories categories={categories} />
         <PromoBanner title="Limited-Time Offers" subtitle="Get ready for our seasonal sale event!" image={promoImage} />
