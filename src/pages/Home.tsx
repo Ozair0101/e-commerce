@@ -8,6 +8,7 @@ import TrendingRow from '../components/TrendingRow';
 import type { Product } from '../components/ProductCard';
 import type { Category } from '../components/Categories';
 import type { TrendItem } from '../components/TrendingRow';
+import Feature from '../components/Feature';
 
 const Home: React.FC = () => {
   const carouselImage =
@@ -110,11 +111,12 @@ const Home: React.FC = () => {
       <div className="flex w-full max-w-7xl flex-col">
         {/* Hero Section */}
         <HeroSection />
-        <Carousel
+        {/* <Carousel
           title="Featured Deals of the Week"
           subtitle="Don't miss out on these limited-time offers"
           image={carouselImage}
-        />
+        /> */}
+        <Feature />   
         <TopSellers products={products} />
         <Categories categories={categories} />
         <PromoBanner title="Limited-Time Offers" subtitle="Get ready for our seasonal sale event!" image={promoImage} />
