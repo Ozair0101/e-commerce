@@ -48,6 +48,7 @@ const Header: React.FC = () => {
       <div className="flex w-full max-w-7xl items-center gap-6 px-4 pb-2 pt-1 text-sm font-medium">
         <Link className="rounded px-1 hover:bg-gray-100 text-gray-700" to="/">Home</Link>
         <Link className="rounded px-1 hover:bg-gray-100 text-gray-700" to="/about">About</Link>
+        <Link className="rounded px-1 hover:bg-gray-100 text-gray-700" to="/shop">Shop</Link>
         <a className="rounded px-1 hover:bg-gray-100 text-gray-700" href="#">Today's Deals</a>
         <a className="rounded px-1 hover:bg-gray-100 text-gray-700" href="#">Electronics</a>
         <a className="rounded px-1 hover:bg-gray-100 text-gray-700" href="#">Books</a>
