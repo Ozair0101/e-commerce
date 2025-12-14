@@ -107,7 +107,6 @@ const Home: React.FC = () => {
   return (
     <div className="flex w-full flex-1 flex-col items-center">
       <div className="flex w-full max-w-7xl flex-col">
-        <h1 className='text-3xl font-bold text-gray-900 bg-red-500'>Hello Ozair my name is mohammad ozair from kabul</h1>
         <Carousel
           title="Featured Deals of the Week"
           subtitle="Don't miss out on these limited-time offers"
