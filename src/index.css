@@ -1,3 +1,20 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-primary: #232F3E;
+  --color-secondary: #ff9900;
+  --color-background-dark: #1a1a1a;
+  --color-surface-dark: #2d2d2d;
+  --color-border-dark: #404040;
+  --color-text-secondary: #9ca3af;
+}
+
+@layer base {
+  body {
+    @apply bg-white text-gray-800;
+  }
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

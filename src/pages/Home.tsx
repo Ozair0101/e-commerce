@@ -1,9 +1,11 @@
 import React from 'react';
+import HeroSection from '../components/HeroSection';
 import Carousel from '../components/Carousel';
 import TopSellers from '../components/TopSellers';
 import Categories from '../components/Categories';
 import PromoBanner from '../components/PromoBanner';
 import TrendingRow from '../components/TrendingRow';
+import Feature from '../components/Feature';
 import type { Product } from '../components/ProductCard';
 import type { Category } from '../components/Categories';
 import type { TrendItem } from '../components/TrendingRow';
@@ -107,12 +109,14 @@ const Home: React.FC = () => {
   return (
     <div className="flex w-full flex-1 flex-col items-center">
       <div className="flex w-full max-w-7xl flex-col">
-        <h1 className='text-3xl font-bold text-gray-900 bg-red-500'>Hello Ozair my name is mohammad ozair from kabul</h1>
-        <Carousel
+        {/* Hero Section */}
+        <HeroSection />
+        {/* <Carousel
           title="Featured Deals of the Week"
           subtitle="Don't miss out on these limited-time offers"
           image={carouselImage}
-        />
+        /> */}
+        <Feature />
         <TopSellers products={products} />
         <Categories categories={categories} />
         <PromoBanner title="Limited-Time Offers" subtitle="Get ready for our seasonal sale event!" image={promoImage} />
