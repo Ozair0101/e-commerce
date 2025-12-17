@@ -56,16 +56,6 @@ const AdminLayout: React.FC = () => {
               <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>settings</span>
               <p className="text-sm font-medium">Settings</p>
             </Link>
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-4 text-white mt-4 relative overflow-hidden group cursor-pointer">
-              <div className="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-orange-500/20 rounded-full blur-2xl group-hover:bg-orange-500/30 transition-all"></div>
-              <div className="relative z-10 flex flex-col gap-2">
-                <span className="material-symbols-outlined text-orange-500">verified_user</span>
-                <div>
-                  <p className="text-sm font-bold">Pro Plan</p>
-                  <p className="text-xs text-gray-400">Your store is growing!</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </aside>
