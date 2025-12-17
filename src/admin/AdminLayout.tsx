@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { Link, Outlet } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 
 const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
 
   const navigation = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: 'dashboard' },
+    { name: 'Products', href: '/admin/products', icon: 'inventory_2' },
     { name: 'Orders', href: '#', icon: 'shopping_bag' },
-    { name: 'Products', href: '#', icon: 'local_mall' },
     { name: 'Customers', href: '#', icon: 'group' },
     { name: 'Analytics', href: '#', icon: 'bar_chart' },
   ];
@@ -36,12 +37,16 @@ const AdminLayout: React.FC = () => {
               <Link
                 key={item.name}
                 to={item.href}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors"
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  location.pathname === item.href 
+                    ? 'bg-orange-50 text-orange-600 font-medium' 
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'
+                }`}
               >
                 <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>
                   {item.icon}
                 </span>
-                <p className="text-sm font-medium">{item.name}</p>
+                <p className="text-sm">{item.name}</p>
               </Link>
             ))}
           </nav>
@@ -77,7 +82,11 @@ const AdminLayout: React.FC = () => {
             >
               <span className="material-symbols-outlined">menu</span>
             </button>
-            <h2 className="text-xl font-bold tracking-tight hidden sm:block">Dashboard</h2>
+            <h2 className="text-xl font-bold tracking-tight hidden sm:block">
+              {location.pathname.includes('products') && !location.pathname.includes('add-product') && 'Products'}
+              {location.pathname.includes('add-product') && 'Add Product'}
+              {location.pathname.includes('dashboard') && 'Dashboard'}
+            </h2>
           </div>
           <div className="flex items-center gap-6">
             {/* Search */}
