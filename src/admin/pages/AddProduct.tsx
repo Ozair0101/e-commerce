@@ -42,20 +42,20 @@ const AddProductPage: React.FC = () => {
   };
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="p-4 sm:p-6 md:p-8 bg-gray-50 min-h-screen">
       <div className="mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Add New Product</h1>
-          <p className="text-gray-600 mt-2">Create a new product for your store</p>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Add New Product</h1>
+          <p className="text-gray-600 mt-1">Create a new product for your store</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
+          <div className="p-4 sm:p-6 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">Product Information</h2>
             <p className="text-gray-600 text-sm mt-1">Basic details about your product</p>
           </div>
           
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Product Name */}
             <div className="md:col-span-2">
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -68,7 +68,7 @@ const AddProductPage: React.FC = () => {
                 value={productData.name}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full px-3 py-2 sm:px-4 sm:py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 placeholder="Enter product name"
               />
             </div>
@@ -84,29 +84,13 @@ const AddProductPage: React.FC = () => {
                 value={productData.category}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full px-3 py-2 sm:px-4 sm:py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               >
                 <option value="">Select a category</option>
                 {categories.map(category => (
                   <option key={category} value={category}>{category}</option>
                 ))}
               </select>
-            </div>
-            
-            {/* SKU */}
-            <div>
-              <label htmlFor="sku" className="block text-sm font-medium text-gray-700 mb-1">
-                SKU
-              </label>
-              <input
-                type="text"
-                id="sku"
-                name="sku"
-                value={productData.sku}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                placeholder="Enter SKU"
-              />
             </div>
             
             {/* Price */}
@@ -125,7 +109,7 @@ const AddProductPage: React.FC = () => {
                   required
                   min="0"
                   step="0.01"
-                  className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full pl-8 pr-3 py-2 sm:pr-4 sm:py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   placeholder="0.00"
                 />
               </div>
@@ -146,7 +130,7 @@ const AddProductPage: React.FC = () => {
                   onChange={handleChange}
                   min="0"
                   step="0.01"
-                  className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full pl-8 pr-3 py-2 sm:pr-4 sm:py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   placeholder="0.00"
                 />
               </div>
@@ -165,7 +149,7 @@ const AddProductPage: React.FC = () => {
                 onChange={handleChange}
                 required
                 min="0"
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full px-3 py-2 sm:px-4 sm:py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 placeholder="Enter quantity"
               />
             </div>
@@ -180,7 +164,7 @@ const AddProductPage: React.FC = () => {
                 name="status"
                 value={productData.status}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full px-3 py-2 sm:px-4 sm:py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               >
                 <option value="published">Published</option>
                 <option value="draft">Draft</option>
@@ -191,7 +175,7 @@ const AddProductPage: React.FC = () => {
             {/* Short Description */}
             <div className="md:col-span-2">
               <label htmlFor="shortDescription" className="block text-sm font-medium text-gray-700 mb-1">
-                Short Description
+                Description
               </label>
               <textarea
                 id="shortDescription"
@@ -199,55 +183,22 @@ const AddProductPage: React.FC = () => {
                 value={productData.shortDescription}
                 onChange={handleChange}
                 rows={3}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full px-3 py-2 sm:px-4 sm:py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 placeholder="Brief description of the product"
               />
-            </div>
-            
-            {/* Full Description */}
-            <div className="md:col-span-2">
-              <label htmlFor="fullDescription" className="block text-sm font-medium text-gray-700 mb-1">
-                Full Description
-              </label>
-              <textarea
-                id="fullDescription"
-                name="fullDescription"
-                value={productData.fullDescription}
-                onChange={handleChange}
-                rows={6}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                placeholder="Detailed description of the product"
-              />
-            </div>
-            
-            {/* Tags */}
-            <div className="md:col-span-2">
-              <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-1">
-                Tags
-              </label>
-              <input
-                type="text"
-                id="tags"
-                name="tags"
-                value={productData.tags}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                placeholder="Enter tags separated by commas"
-              />
-              <p className="text-xs text-gray-500 mt-1">Separate tags with commas (e.g. electronics, smartphone, tech)</p>
             </div>
           </div>
           
           {/* Image Upload Section */}
-          <div className="p-6 border-t border-gray-200">
+          <div className="p-4 sm:p-6 border-t border-gray-200">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Product Images</h3>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-              <span className="material-symbols-outlined text-4xl text-gray-400 mb-3">cloud_upload</span>
-              <h4 className="text-lg font-medium text-gray-900 mb-1">Upload images</h4>
-              <p className="text-gray-500 text-sm mb-4">PNG, JPG, GIF up to 10MB</p>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 sm:p-8 text-center">
+              <span className="material-symbols-outlined text-3xl sm:text-4xl text-gray-400 mb-2 sm:mb-3">cloud_upload</span>
+              <h4 className="text-base sm:text-lg font-medium text-gray-900 mb-1">Upload images</h4>
+              <p className="text-gray-500 text-sm mb-3 sm:mb-4">PNG, JPG, GIF up to 10MB</p>
               <button
                 type="button"
-                className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                className="px-3 py-2 sm:px-4 sm:py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
               >
                 Select Files
               </button>
@@ -255,16 +206,16 @@ const AddProductPage: React.FC = () => {
           </div>
           
           {/* Form Actions */}
-          <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
+          <div className="p-4 sm:p-6 border-t border-gray-200 flex justify-end gap-2 sm:gap-3">
             <Link
               to="/admin/products"
-              className="px-6 py-2 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
+              className="px-4 py-2 sm:px-6 sm:py-2 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
             >
               Cancel
             </Link>
             <button
               type="submit"
-              className="px-6 py-2 bg-orange-500 text-white rounded-lg text-sm font-semibold hover:bg-orange-600 shadow-md"
+              className="px-4 py-2 sm:px-6 sm:py-2 bg-orange-500 text-white rounded-lg text-sm font-semibold hover:bg-orange-600 shadow-md"
             >
               Add Product
             </button>
