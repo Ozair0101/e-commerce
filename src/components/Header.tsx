@@ -41,6 +41,9 @@ const Header: React.FC = () => {
           </label>
         </div>
         <div className="flex items-center justify-end gap-4">
+          <Link to="/admin/dashboard" className="hidden lg:flex items-center rounded px-2 py-1 text-left hover:bg-gray-100">
+            <span className="text-sm font-bold text-gray-800">Admin</span>
+          </Link>
           <button className="hidden flex-col items-start rounded px-2 py-1 text-left hover:bg-gray-100 sm:flex">
             <span className="text-xs font-normal text-gray-600">Hello, sign in</span>
             <span className="text-sm font-bold text-gray-800">Account & Lists</span>
@@ -108,6 +111,13 @@ const Header: React.FC = () => {
               onClick={() => setIsMenuOpen(false)}
             >
               Shop
+            </Link>
+            <Link 
+              className="py-2 px-1 hover:bg-gray-100 text-gray-700 rounded" 
+              to="/admin/dashboard" 
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Admin Dashboard
             </Link>
             <div className="pt-2 mt-2 border-t border-gray-200">
               <button className="w-full flex flex-col items-start rounded px-1 py-2 text-left hover:bg-gray-100">
