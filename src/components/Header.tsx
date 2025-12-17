@@ -48,10 +48,6 @@ const Header: React.FC = () => {
             <span className="text-xs font-normal text-gray-600">Hello, sign in</span>
             <span className="text-sm font-bold text-gray-800">Account & Lists</span>
           </button>
-          <button className="hidden flex-col items-start rounded px-2 py-1 text-left hover:bg-gray-100 sm:flex">
-            <span className="text-xs font-normal text-gray-600">Returns</span>
-            <span className="text-sm font-bold text-gray-800">& Orders</span>
-          </button>
           <button className="flex items-end gap-1 rounded px-2 py-1 hover:bg-gray-100">
             <div className="relative">
               <span className="material-symbols-outlined text-3xl">shopping_cart</span>
@@ -120,10 +116,6 @@ const Header: React.FC = () => {
               Admin Dashboard
             </Link>
             <div className="pt-2 mt-2 border-t border-gray-200">
-              <button className="w-full flex flex-col items-start rounded px-1 py-2 text-left hover:bg-gray-100">
-                <span className="text-xs font-normal text-gray-600">Hello, sign in</span>
-                <span className="text-sm font-bold text-gray-800">Account & Lists</span>
-              </button>
               <button className="w-full flex flex-col items-start rounded px-1 py-2 text-left hover:bg-gray-100">
                 <span className="text-xs font-normal text-gray-600">Returns</span>
                 <span className="text-sm font-bold text-gray-800">& Orders</span>
