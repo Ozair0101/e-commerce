@@ -5,6 +5,8 @@ import Home from './pages/Home'
 import About from './pages/About'
 import Shop from './pages/Shop'
 import Dashboard from './admin/pages/dashboard'
+import ProductPage from './admin/pages/Product'
+import AddProductPage from './admin/pages/AddProduct'
 import AdminLayout from './admin/AdminLayout'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
@@ -19,6 +21,8 @@ function App() {
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="products" element={<ProductPage />} />
+            <Route path="add-product" element={<AddProductPage />} />
           </Route>
           
           {/* Main Site Routes */}
