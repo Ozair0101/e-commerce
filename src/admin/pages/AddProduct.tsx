@@ -1,30 +1,45 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../../utils/api';
+import Toast from '../../components/Toast';
+
+interface Category {
+  category_id: string;
+  name: string;
+}
 
 const AddProductPage: React.FC = () => {
   const [productData, setProductData] = useState({
     name: '',
-    category: '',
+    category_id: '',
     price: '',
-    discountPrice: '',
-    stock: '',
+    discount_price: '',
+    stock_quantity: '',
     sku: '',
-    shortDescription: '',
-    fullDescription: '',
-    tags: '',
+    description: '',
     status: 'published'
   });
+  
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
+  
+  const navigate = useNavigate();
 
-  const categories = [
-    'Electronics',
-    'Clothing',
-    'Home & Kitchen',
-    'Beauty',
-    'Sports',
-    'Books',
-    'Toys',
-    'Other'
-  ];
+  // Fetch categories from backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await api.get('/categories');
+        setCategories(response.data.data || response.data);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        setToast({ message: 'Failed to load categories', type: 'error' });
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -34,15 +49,70 @@ const AddProductPage: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Product Data:', productData);
-    // Here you would typically send the data to your backend
-    alert('Product added successfully!');
+    
+    // Validate required fields
+    if (!productData.name || !productData.category_id || !productData.price || !productData.stock_quantity) {
+      setToast({ message: 'Please fill in all required fields', type: 'error' });
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      
+      // Prepare data for submission
+      const productPayload = {
+        ...productData,
+        price: parseFloat(productData.price),
+        discount_price: productData.discount_price ? parseFloat(productData.discount_price) : null,
+        stock_quantity: parseInt(productData.stock_quantity)
+      };
+      
+      // Send data to backend
+      await api.post('/products', productPayload);
+      
+      // Show success message
+      setToast({ message: 'Product added successfully!', type: 'success' });
+      
+      // Redirect to products page after a delay
+      setTimeout(() => {
+        navigate('/admin/products');
+      }, 1500);
+    } catch (error: any) {
+      console.error('Error adding product:', error);
+      let errorMessage = 'Failed to add product. Please try again.';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.errors) {
+        // Handle validation errors
+        const firstErrorField = Object.keys(error.response.data.errors)[0];
+        const firstError = error.response.data.errors[firstErrorField][0];
+        errorMessage = firstError;
+      }
+      
+      setToast({ message: errorMessage, type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const closeToast = () => {
+    setToast(null);
   };
 
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-gray-50 min-h-screen">
+      {/* Toast notification */}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={closeToast} 
+        />
+      )}
+      
       <div className="mx-auto">
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Add New Product</h1>
@@ -75,20 +145,20 @@ const AddProductPage: React.FC = () => {
             
             {/* Category */}
             <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="category_id" className="block text-sm font-medium text-gray-700 mb-1">
                 Category *
               </label>
               <select
-                id="category"
-                name="category"
-                value={productData.category}
+                id="category_id"
+                name="category_id"
+                value={productData.category_id}
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 sm:px-4 sm:py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               >
                 <option value="">Select a category</option>
                 {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
+                  <option key={category.category_id} value={category.category_id}>{category.name}</option>
                 ))}
               </select>
             </div>
@@ -117,16 +187,16 @@ const AddProductPage: React.FC = () => {
             
             {/* Discount Price */}
             <div>
-              <label htmlFor="discountPrice" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="discount_price" className="block text-sm font-medium text-gray-700 mb-1">
                 Discount Price
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
                 <input
                   type="number"
-                  id="discountPrice"
-                  name="discountPrice"
-                  value={productData.discountPrice}
+                  id="discount_price"
+                  name="discount_price"
+                  value={productData.discount_price}
                   onChange={handleChange}
                   min="0"
                   step="0.01"
@@ -138,14 +208,14 @@ const AddProductPage: React.FC = () => {
             
             {/* Stock Quantity */}
             <div>
-              <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="stock_quantity" className="block text-sm font-medium text-gray-700 mb-1">
                 Stock Quantity *
               </label>
               <input
                 type="number"
-                id="stock"
-                name="stock"
-                value={productData.stock}
+                id="stock_quantity"
+                name="stock_quantity"
+                value={productData.stock_quantity}
                 onChange={handleChange}
                 required
                 min="0"
@@ -172,15 +242,15 @@ const AddProductPage: React.FC = () => {
               </select>
             </div>
             
-            {/* Short Description */}
+            {/* Description */}
             <div className="md:col-span-2">
-              <label htmlFor="shortDescription" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
                 Description
               </label>
               <textarea
-                id="shortDescription"
-                name="shortDescription"
-                value={productData.shortDescription}
+                id="description"
+                name="description"
+                value={productData.description}
                 onChange={handleChange}
                 rows={3}
                 className="w-full px-3 py-2 sm:px-4 sm:py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
@@ -215,9 +285,20 @@ const AddProductPage: React.FC = () => {
             </Link>
             <button
               type="submit"
-              className="px-4 py-2 sm:px-6 sm:py-2 bg-orange-500 text-white rounded-lg text-sm font-semibold hover:bg-orange-600 shadow-md"
+              disabled={loading}
+              className="px-4 py-2 sm:px-6 sm:py-2 bg-orange-500 text-white rounded-lg text-sm font-semibold hover:bg-orange-600 shadow-md disabled:opacity-50 flex items-center"
             >
-              Add Product
+              {loading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Saving...
+                </>
+              ) : (
+                'Add Product'
+              )}
             </button>
           </div>
         </form>
