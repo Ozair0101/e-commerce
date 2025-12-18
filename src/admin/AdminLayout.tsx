@@ -7,6 +7,7 @@ const AdminLayout: React.FC = () => {
 
   const navigation = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: 'dashboard' },
+    { name: 'Categories', href: '/admin/categories', icon: 'category' },
     { name: 'Products', href: '/admin/products', icon: 'inventory_2' },
     { name: 'Orders', href: '#', icon: 'shopping_bag' },
     { name: 'Customers', href: '#', icon: 'group' },
@@ -38,7 +39,8 @@ const AdminLayout: React.FC = () => {
                 key={item.name}
                 to={item.href}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  location.pathname === item.href 
+                  location.pathname === item.href || 
+                  (item.href === '/admin/categories' && location.pathname.startsWith('/admin/add-category'))
                     ? 'bg-orange-50 text-orange-600 font-medium' 
                     : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'
                 }`}
@@ -56,6 +58,16 @@ const AdminLayout: React.FC = () => {
               <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>settings</span>
               <p className="text-sm font-medium">Settings</p>
             </Link>
+            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-4 text-white mt-4 relative overflow-hidden group cursor-pointer">
+              <div className="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-orange-500/20 rounded-full blur-2xl group-hover:bg-orange-500/30 transition-all"></div>
+              <div className="relative z-10 flex flex-col gap-2">
+                <span className="material-symbols-outlined text-orange-500">verified_user</span>
+                <div>
+                  <p className="text-sm font-bold">Pro Plan</p>
+                  <p className="text-xs text-gray-400">Your store is growing!</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </aside>
@@ -73,6 +85,8 @@ const AdminLayout: React.FC = () => {
               <span className="material-symbols-outlined">menu</span>
             </button>
             <h2 className="text-xl font-bold tracking-tight hidden sm:block">
+              {location.pathname.includes('categories') && !location.pathname.includes('add-category') && 'Categories'}
+              {location.pathname.includes('add-category') && 'Add Category'}
               {location.pathname.includes('products') && !location.pathname.includes('add-product') && 'Products'}
               {location.pathname.includes('add-product') && 'Add Product'}
               {location.pathname.includes('dashboard') && 'Dashboard'}

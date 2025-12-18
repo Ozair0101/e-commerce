@@ -9,6 +9,8 @@ import Register from './pages/Register'
 import Dashboard from './admin/pages/dashboard'
 import ProductPage from './admin/pages/Product'
 import AddProductPage from './admin/pages/AddProduct'
+import CategoryList from './admin/pages/CategoryList'
+import AddCategory from './admin/pages/AddCategory'
 import AdminLayout from './admin/AdminLayout'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
@@ -23,10 +25,6 @@ function App() {
           style={{ fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'" }}
         >
           <Routes>
-            {/* Public Routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            
             {/* Admin Routes - Protected and require admin role */}
             <Route path="/admin" element={
               <ProtectedRoute requireAdmin={true}>
@@ -36,6 +34,8 @@ function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="products" element={<ProductPage />} />
               <Route path="add-product" element={<AddProductPage />} />
+              <Route path="categories" element={<CategoryList />} />
+              <Route path="add-category" element={<AddCategory />} />
             </Route>
             
             {/* Main Site Routes */}
@@ -47,6 +47,8 @@ function App() {
                     <Route path="/" element={<Home />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/shop" element={<Shop />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
                   </Routes>
                 </main>
                 <Footer />
