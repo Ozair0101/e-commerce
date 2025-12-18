@@ -39,14 +39,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        // Fetch CSRF token first
+        // First, hydrate user state from sessionStorage if available
+        const storedUser = sessionStorage.getItem('user');
+        if (storedUser) {
+          try {
+            const parsedUser: User = JSON.parse(storedUser);
+            setUser(parsedUser);
+          } catch (e) {
+            sessionStorage.removeItem('user');
+          }
+        }
+
+        // Then try to verify with backend. If this fails, keep any stored user
+        // so that we don't force a logout on page refresh.
         await fetchCsrfToken();
-        
+
         const response = await api.get('/user');
         setUser(response.data.user);
+        // Store user info in sessionStorage for persistence
+        sessionStorage.setItem('user', JSON.stringify(response.data.user));
       } catch (error) {
-        // User is not authenticated
-        setUser(null);
+        // If verification fails, we don't clear existing user/sessionStorage here.
+        // This prevents an already logged-in admin from being redirected to login on refresh.
       } finally {
         setLoading(false);
       }
@@ -59,6 +73,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await api.post('/login', { email, password });
       setUser(response.data.user);
+      // Store user info in sessionStorage for persistence
+      sessionStorage.setItem('user', JSON.stringify(response.data.user));
     } catch (error) {
       throw error;
     }
@@ -67,10 +83,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async () => {
     try {
       await api.post('/logout');
-      setUser(null);
     } catch (error) {
       // Even if the request fails, clear the user state
+    } finally {
       setUser(null);
+      // Clear user info from sessionStorage
+      sessionStorage.removeItem('user');
     }
   };
 
@@ -83,6 +101,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         password_confirmation: passwordConfirmation
       });
       setUser(response.data.user);
+      // Store user info in sessionStorage for persistence
+      sessionStorage.setItem('user', JSON.stringify(response.data.user));
     } catch (error) {
       throw error;
     }
