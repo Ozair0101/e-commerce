@@ -25,6 +25,10 @@ function App() {
           style={{ fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'" }}
         >
           <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            
             {/* Admin Routes - Protected and require admin role */}
             <Route path="/admin" element={
               <ProtectedRoute requireAdmin={true}>
@@ -47,8 +51,6 @@ function App() {
                     <Route path="/" element={<Home />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/shop" element={<Shop />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
                   </Routes>
                 </main>
                 <Footer />

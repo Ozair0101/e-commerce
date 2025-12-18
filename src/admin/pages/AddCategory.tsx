@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import api from '../../utils/api';
+import Toast from '../../components/Toast';
 
 const AddCategory: React.FC = () => {
   const [categoryData, setCategoryData] = useState({
@@ -7,7 +9,7 @@ const AddCategory: React.FC = () => {
     description: ''
   });
   
-  const [error, setError] = useState('');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
   const [loading, setLoading] = useState(false);
   
   const navigate = useNavigate();
@@ -20,25 +22,62 @@ const AddCategory: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!categoryData.name.trim()) {
-      setError('Category name is required');
+      setToast({ message: 'Category name is required', type: 'error' });
       return;
     }
     
-    // Simulate API call
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      setLoading(true);
+      
+      // Make API call to save category
+      await api.post('/categories', categoryData);
+      
+      // Show success toast
+      setToast({ message: 'Category created successfully!', type: 'success' });
+      
       // Redirect to category list after successful creation
-      navigate('/admin/categories');
-    }, 1000);
+      setTimeout(() => {
+        navigate('/admin/categories');
+      }, 1500);
+    } catch (err: any) {
+      console.error('Error saving category:', err);
+      let errorMessage = 'Failed to save category. Please try again.';
+      
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.response?.data?.errors) {
+        // Handle validation errors
+        const firstErrorField = Object.keys(err.response.data.errors)[0];
+        const firstError = err.response.data.errors[firstErrorField][0];
+        errorMessage = firstError;
+      }
+      
+      // Show error toast
+      setToast({ message: errorMessage, type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const closeToast = () => {
+    setToast(null);
   };
 
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-gray-50 min-h-screen">
+      {/* Toast notification */}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={closeToast} 
+        />
+      )}
+      
       <div className="mx-auto">
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Add New Category</h1>
@@ -50,22 +89,6 @@ const AddCategory: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-900">Category Information</h2>
             <p className="text-gray-600 text-sm mt-1">Basic details about your category</p>
           </div>
-          
-          {error && (
-            <div className="p-4 sm:p-6">
-              <div className="rounded-lg bg-red-50 p-4 border border-red-100">
-                <div className="flex">
-                  <span className="material-symbols-outlined text-red-500">error</span>
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">Error</h3>
-                    <div className="mt-1 text-sm text-red-700">
-                      {error}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
           
           <div className="p-4 sm:p-6 grid grid-cols-1 gap-4 sm:gap-6">
             {/* Category Name */}
