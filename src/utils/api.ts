@@ -14,7 +14,10 @@ const api = axios.create({
 // Function to fetch CSRF cookie
 export const fetchCsrfToken = async () => {
   try {
-    await axios.get('/sanctum/csrf-cookie', { withCredentials: true });
+    await axios.get('/sanctum/csrf-cookie', { 
+      withCredentials: true,
+      baseURL: '' // Use absolute path
+    });
   } catch (error) {
     console.error('Failed to fetch CSRF token:', error);
   }
@@ -23,19 +26,18 @@ export const fetchCsrfToken = async () => {
 // Add a request interceptor to include CSRF token
 api.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    // Fetch CSRF token before first request
-    if (!document.cookie.includes('XSRF-TOKEN')) {
-      await fetchCsrfToken();
-    }
+    // Always fetch CSRF token before each request to ensure it's fresh
+    await fetchCsrfToken();
     
-    // Get CSRF token from cookie
+    // Get CSRF token from cookie and send it in the header Laravel Sanctum expects
     const csrfToken = document.cookie
       .split('; ')
       .find(row => row.startsWith('XSRF-TOKEN='))
       ?.split('=')[1];
-      
+
     if (csrfToken) {
-      config.headers['X-CSRF-TOKEN'] = decodeURIComponent(csrfToken);
+      // Sanctum expects the XSRF-TOKEN cookie value (URL-decoded) in the X-XSRF-TOKEN header
+      config.headers['X-XSRF-TOKEN'] = decodeURIComponent(csrfToken);
     }
     
     return config;
@@ -53,8 +55,9 @@ api.interceptors.response.use(
   (error: any) => {
     if (error.response?.status === 401) {
       // Handle unauthorized access
-      // You might want to redirect to login page or clear auth state
-      console.log('Unauthorized access - possibly redirect to login');
+      console.log('Unauthorized access - redirecting to login');
+      // Optionally redirect to login page
+      // window.location.href = '/login';
     }
     return Promise.reject(error);
   }
