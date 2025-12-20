@@ -9,6 +9,7 @@ import Register from './pages/Register'
 import Dashboard from './admin/pages/dashboard'
 import ProductPage from './admin/pages/Product'
 import AddProductPage from './admin/pages/AddProduct'
+import ProductDetailPage from './admin/pages/ProductDetail'
 import CategoryList from './admin/pages/CategoryList'
 import AddCategory from './admin/pages/AddCategory'
 import AdminLayout from './admin/AdminLayout'
@@ -37,6 +38,7 @@ function App() {
             }>
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="products" element={<ProductPage />} />
+              <Route path="products/:id" element={<ProductDetailPage />} />
               <Route path="add-product" element={<AddProductPage />} />
               <Route path="categories" element={<CategoryList />} />
               <Route path="add-category" element={<AddCategory />} />

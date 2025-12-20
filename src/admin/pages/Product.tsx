@@ -240,7 +240,10 @@ const ProductPage: React.FC = () => {
                         </td>
                         <td className="py-3 px-4 sm:py-4 sm:px-6 text-right">
                           <div className="flex justify-end gap-1 sm:gap-2">
-                            <button className="p-1.5 sm:p-2 text-gray-500 hover:text-orange-500 rounded-full hover:bg-orange-50">
+                            <button
+                              className="p-1.5 sm:p-2 text-gray-500 hover:text-orange-500 rounded-full hover:bg-orange-50"
+                              onClick={() => navigate(`/admin/products/${product.product_id}`)}
+                            >
                               <span className="material-symbols-outlined text-base sm:text-lg">visibility</span>
                             </button>
                             <button
