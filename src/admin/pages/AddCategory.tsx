@@ -1,20 +1,34 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+
 import api from '../../utils/api';
 import Toast from '../../components/Toast';
 import { useAuth } from '../../contexts/AuthContext';
 
 const AddCategory: React.FC = () => {
+  const location = useLocation();
+  const state = location.state as { category?: { category_id: string; name: string; description: string } } | null;
+  const editingCategory = state?.category;
+
   const [categoryData, setCategoryData] = useState({
-    name: '',
-    description: ''
+    name: editingCategory?.name || '',
+    description: editingCategory?.description || ''
   });
-  
+
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
   const [loading, setLoading] = useState(false);
-  
+
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (editingCategory) {
+      setCategoryData({
+        name: editingCategory.name || '',
+        description: editingCategory.description || ''
+      });
+    }
+  }, [editingCategory]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -26,32 +40,37 @@ const AddCategory: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Check if user is authenticated and is admin
     if (!user) {
       setToast({ message: 'You must be logged in to create a category', type: 'error' });
       return;
     }
-    
+
     if (user.role !== 'admin') {
       setToast({ message: 'Access denied. You must be an administrator to create categories.', type: 'error' });
       return;
     }
-    
+
     if (!categoryData.name.trim()) {
       setToast({ message: 'Category name is required', type: 'error' });
       return;
     }
-    
+
     try {
       setLoading(true);
-      
-      // Make API call to save category
-      await api.post('/categories', categoryData);
-      
-      // Show success toast
-      setToast({ message: 'Category created successfully!', type: 'success' });
-      
+
+      if (editingCategory) {
+        await api.put(`/categories/${editingCategory.category_id}`, categoryData);
+        setToast({ message: 'Category updated successfully!', type: 'success' });
+      } else {
+        // Make API call to save category
+        await api.post('/categories', categoryData);
+
+        // Show success toast
+        setToast({ message: 'Category created successfully!', type: 'success' });
+      }
+
       // Redirect to category list after successful creation
       setTimeout(() => {
         navigate('/admin/categories');
@@ -59,7 +78,7 @@ const AddCategory: React.FC = () => {
     } catch (err: any) {
       console.error('Error saving category:', err);
       let errorMessage = 'Failed to save category. Please try again.';
-      
+
       // Handle different types of errors
       if (err.response?.status === 401) {
         errorMessage = 'Authentication failed. Please log in as an administrator.';
@@ -75,7 +94,7 @@ const AddCategory: React.FC = () => {
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       // Show error toast
       setToast({ message: errorMessage, type: 'error' });
     } finally {
@@ -91,17 +110,17 @@ const AddCategory: React.FC = () => {
     <div className="p-4 sm:p-6 md:p-8 bg-gray-50 min-h-screen">
       {/* Toast notification */}
       {toast && (
-        <Toast 
-          message={toast.message} 
-          type={toast.type} 
-          onClose={closeToast} 
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={closeToast}
         />
       )}
-      
+
       <div className="mx-auto">
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Add New Category</h1>
-          <p className="text-gray-600 mt-1">Create a new product category</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{editingCategory ? 'Edit Category' : 'Add New Category'}</h1>
+          <p className="text-gray-600 mt-1">{editingCategory ? 'Update an existing product category' : 'Create a new product category'}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
@@ -109,7 +128,7 @@ const AddCategory: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-900">Category Information</h2>
             <p className="text-gray-600 text-sm mt-1">Basic details about your category</p>
           </div>
-          
+
           <div className="p-4 sm:p-6 grid grid-cols-1 gap-4 sm:gap-6">
             {/* Category Name */}
             <div>
@@ -128,7 +147,7 @@ const AddCategory: React.FC = () => {
               />
               <p className="text-xs text-gray-500 mt-1">This will be displayed to customers</p>
             </div>
-            
+
             {/* Description */}
             <div>
               <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
@@ -146,7 +165,7 @@ const AddCategory: React.FC = () => {
               <p className="text-xs text-gray-500 mt-1">Brief description of what products belong to this category</p>
             </div>
           </div>
-          
+
           {/* Form Actions */}
           <div className="p-4 sm:p-6 border-t border-gray-200 flex justify-end gap-2 sm:gap-3">
             <Link
@@ -171,7 +190,7 @@ const AddCategory: React.FC = () => {
               ) : (
                 <>
                   <span className="material-symbols-outlined text-lg mr-2">save</span>
-                  Save Category
+                  {editingCategory ? 'Update Category' : 'Save Category'}
                 </>
               )}
             </button>
