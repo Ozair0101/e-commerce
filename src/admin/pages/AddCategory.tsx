@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
 import Toast from '../../components/Toast';
+import { useAuth } from '../../contexts/AuthContext';
 
 const AddCategory: React.FC = () => {
   const [categoryData, setCategoryData] = useState({
@@ -13,6 +14,7 @@ const AddCategory: React.FC = () => {
   const [loading, setLoading] = useState(false);
   
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -24,6 +26,17 @@ const AddCategory: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if user is authenticated and is admin
+    if (!user) {
+      setToast({ message: 'You must be logged in to create a category', type: 'error' });
+      return;
+    }
+    
+    if (user.role !== 'admin') {
+      setToast({ message: 'Access denied. You must be an administrator to create categories.', type: 'error' });
+      return;
+    }
     
     if (!categoryData.name.trim()) {
       setToast({ message: 'Category name is required', type: 'error' });
@@ -47,13 +60,20 @@ const AddCategory: React.FC = () => {
       console.error('Error saving category:', err);
       let errorMessage = 'Failed to save category. Please try again.';
       
-      if (err.response?.data?.message) {
+      // Handle different types of errors
+      if (err.response?.status === 401) {
+        errorMessage = 'Authentication failed. Please log in as an administrator.';
+      } else if (err.response?.status === 403) {
+        errorMessage = 'Access denied. You must be an administrator to create categories.';
+      } else if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
       } else if (err.response?.data?.errors) {
         // Handle validation errors
         const firstErrorField = Object.keys(err.response.data.errors)[0];
         const firstError = err.response.data.errors[firstErrorField][0];
         errorMessage = firstError;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       
       // Show error toast
