@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+
 import HeroSection from '../components/HeroSection';
 import Carousel from '../components/Carousel';
 import TopSellers from '../components/TopSellers';
+
 import Categories from '../components/Categories';
 import PromoBanner from '../components/PromoBanner';
 import TrendingRow from '../components/TrendingRow';
@@ -9,72 +11,134 @@ import Feature from '../components/Feature';
 import type { Product } from '../components/ProductCard';
 import type { Category } from '../components/Categories';
 import type { TrendItem } from '../components/TrendingRow';
+import api from '../utils/api';
 
 const Home: React.FC = () => {
-  const carouselImage =
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuAp8udE0YT-ebOl0P-Zx51wudIpd9o6ySqpc5EXVOIzPyJ-G4GrYhbRDyU0Iyevnfbqc-sxcrMn--vNeRNiw1JAkSifhxOxvpHA1iU1CBOcVz7c9pK9ftqyR_rMimyAseAXHjZCORobmAZ0EdZIit_dsqMGsP1PuVCYefy7yti5qplhL8fpCOmoHjCWEl90-59W60z3_dlu3hrguBHvKms-0tujdedBO4UJkOI04011vZos4Kiu1gfn-xxWuzJ6AF_B5tbnHfuIIiY';
+  const [topSellerProducts, setTopSellerProducts] = useState<Product[]>([]);
+  const [topSellersLoading, setTopSellersLoading] = useState<boolean>(true);
 
-  const products: Product[] = [
-    {
-      id: 'p1',
-      title: 'High-Performance Laptop',
-      price: '$1299.99',
-      rating: 4.5,
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuDPWg5V5EquwPoDWiTChhxdrgM8Zrh4WXuEdb3e1sqO3AoAszrZ_pDVqVBjtwONnX1AH1A0HqnfHBmStx4XaMj6UCqZi-iy0CwuzHKYMmt5h0h59ab7qPiC7bnARRyeSTDK3m7fu6BySQWNkj99dQdUNaNhkCZi96p37hr3jtXqOQy79eqljwzpq31ATS4flM2cKhlqasChZvv5PieVX4jWj1xzwPrWl9QHIxMqYFgJKIZ77IVSvKdGswCwQOTm0eNgLpVwgoLizrU',
-    },
-    {
-      id: 'p2',
-      title: 'Wireless Noise-Cancelling Headphones',
-      price: '$349.99',
-      rating: 5,
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuD4BXjLeuvevKS0P96K50lRHHQQYRyrrW39UruQ75XICIW0UaeL3HLfsT36Z_X-viCvr-PD5IwHmW4aRebrFJR2_rlbsrIJkzvUznjGAhspjNQWY-wC-vscSPNUQXDz5FxZFGvYMS29tbu00c31osXbw7YjLZh1AfBqILd0oHi3qce5ZPg9SSkmNH1tQozoTW-IjRRTZLIE7Iub90tKA02-FkhEu787mAMS3FAUWFUKVTtrjMO3IHbZsEk3VDqFpRqD5ErvBTL94pk',
-    },
-    {
-      id: 'p3',
-      title: 'Smart Home Hub',
-      price: '$99.99',
-      rating: 4,
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuBg-fFDA3utSm0rCJBW7auhWdBTvOD066gOBiBL45hr929K0ZbYyrSf3UTDfcxs7KUQAPhr0XK8ijJXYReObpu4xzLyXf3Xn2djgoKS12u0_-2P7ZkbqInw5byerLT6_pNQ0J52v32EQO9m_K9gonCQuohKZ0QxdGAhgIkTHoxjxESTKd8h2kahZvKiDNm3zL9G34haWhUrgdjqbYZWIteBfjK8D1lqFnbVr2wvaIO8DwahjNsbxynnTz65Wx8wdwN6NQ0JGoHLYGE',
-    },
-    {
-      id: 'p4',
-      title: '4K Ultra HD Smart TV',
-      price: '$799.00',
-      rating: 4.5,
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuDYPZAGQUQx-AoM5c5OQgWv_VaOYZoHMRROYqOhVqZmMz7a73i4-L9EMtQ0hvTbs0HpKmbAG-qeohsyhMdoodsUoPgtOdSUafU8hZgENtMhZxfnV4lyllJx4Ck6CeNuG1Ft8gXBvsVXk49m0dRkkPF-FcFb0rPVggnC2m7IIXAI0FZUKP8KHysF-NSj6aaJTQH3LztaBjUC9VdSSsZq37lH7oq01ULPjXy2xvITJmjaToWURuQnFPfmIcCdxFvXmVS09AEZgz4f728',
-    },
-  ];
+  interface ApiProductImage {
+    id: number;
+    url: string;
+    is_primary: boolean;
+  }
 
-  const categories: Category[] = [
-    {
-      id: 'c1',
-      name: 'Electronics',
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuBbI4LlRLHqKg0JQL803dE6HXZjs0Qwl-adV7Ikag6epfRmRS9wcyO_eQsDQSZv5bIbbuxhuGd7ZtSREUE8xY0atYsU1AiGq6CBbVHuTx-RvmYhHL0v7I5Q2fTw1qaV1vnfPkgitFitpsYMy7yQCw2wz3S7MP3bpoiTBYQ-50PfHVT2C85hVw5LrMCEdrZpp9N4BQERA6Nk3yKPz-VeUyzrpAwCh-8GpZoDLzbUKvFAPPzmfw8Hh6WTzcdmHx7fatIfLQ4LFQh2hFA',
-    },
-    {
-      id: 'c2',
-      name: 'Home & Kitchen',
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuBEBToWYF5PhRf7fJbxG6MATAEjdEhIpjso6vJTrv6P1NAn9OEOBSjBkM9lbBAO1n0ehwG9vozAYOUYY32tyrjPsM8_lpuT37tCPc2xIcNOV0UDWkrCXGWuKbga8Pa8y-7dc9XXZdvLu6E0Xd_UX-JoDNlsPzuVqWETUUYUhDvmHf459PasWkk8xIlnfJq7ktpcPKDuxsFFQc-aJyH0ThrVyDhri9P9rhHoYAI0IeTmrbx1g3ovaCAJELXh3gpIXrBps2IQ3C5bDoo',
-    },
-    {
-      id: 'c3',
-      name: 'Fashion',
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuBWpX5r4VLm-LXUq9Qg2YyF7K6TA_e-cy30AkBgLMxMy282kKbZrUUap7-0d5WLYVhq8SrdpRnntO-B9jM1cBt_3fdNoN9kz7G2u_hULiLHnaDmTBG9lqi2qPSsvZFJwCyIQtjoSnXrj2iMeJglIQCg0Q6Z7cNvvvoLJLxchkSbn-EvqmRRXFdqKJdt95kFGpAFtP_ntzkhQNeTfBqUrNyaLtXzw6aiswShIRwiPzufIYFpc-nF-nP9HV2rpF7_YY940z8RkG-9e_c',
-    },
-    {
-      id: 'c4',
-      name: 'Books',
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuDcg3wKOyc6aIalRW8x-QWIdo0-zRIa0DuOp9FI2Q1-hgEmhMwGhUnk1OI9JgNDMGxKi5NbIRHcAICd1a4LoVOeQxuCrVDagNDVtMAigADTRW2v0grvuatriJlVgWStuwdEleTUjKJZIUBsW6JZPo1RY7U4PswY9Ot8Awt2YfTz1pcByyJEI2L4GFQsOoiaRGZijvPGYGINSC-jPVp7abSFkfLyVBTPyUZi9xuHHW2g6LA9G9-Qe8Y2Nu_fK-tubqBLjl_YHlqYkes',
-    },
-  ];
+  interface ApiProduct {
+    product_id: number;
+    name: string;
+    price: number;
+    discount_price: number | null;
+    images?: ApiProductImage[];
+  }
+
+  const backendOrigin = useMemo(() => {
+    try {
+      const base = (api.defaults.baseURL as string) || '';
+      return base ? new URL(base).origin : window.location.origin;
+    } catch {
+      return window.location.origin;
+    }
+  }, []);
+
+  const resolveImageUrl = (url: string | undefined) => {
+    if (!url) return '';
+
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      try {
+        const parsed = new URL(url);
+        const backend = new URL(backendOrigin);
+
+        const isLocalhost = parsed.hostname === 'localhost';
+        const hasNoPort = !parsed.port;
+        const backendHasPort = !!backend.port;
+
+        if (isLocalhost && hasNoPort && backendHasPort) {
+          return `${backendOrigin}${parsed.pathname}${parsed.search}${parsed.hash}`;
+        }
+
+        return url;
+      } catch {
+        return url;
+      }
+    }
+
+    return `${backendOrigin}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchTopSellers = async () => {
+      try {
+        setTopSellersLoading(true);
+        const response = await api.get('/latest-products');
+        const data: ApiProduct[] = response.data.data || response.data;
+
+        if (!isMounted) return;
+
+        const mapped: Product[] = data.slice(0, 12).map((p) => {
+          const primaryImage =
+            p.images && p.images.length > 0
+              ? p.images.find((img) => img.is_primary) || p.images[0]
+              : undefined;
+
+          const finalPrice =
+            p.discount_price !== null && p.discount_price < p.price
+              ? p.discount_price
+              : p.price;
+
+          return {
+            id: String(p.product_id),
+            title: p.name,
+            price: `$${Number(finalPrice).toFixed(2)}`,
+            rating: 4.5,
+            image: resolveImageUrl(primaryImage?.url),
+          };
+        });
+
+        setTopSellerProducts(mapped);
+      } catch (err) {
+        console.error('Error fetching latest products for Top Sellers:', err);
+      } finally {
+        if (isMounted) {
+          setTopSellersLoading(false);
+        }
+      }
+    };
+
+    fetchTopSellers();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [backendOrigin]);
+
+  // const categories: Category[] = [
+  //   {
+  //     id: 'c1',
+  //     name: 'Electronics',
+  //     image:
+  //       'https://lh3.googleusercontent.com/aida-public/AB6AXuBbI4LlRLHqKg0JQL803dE6HXZjs0Qwl-adV7Ikag6epfRmRS9wcyO_eQsDQSZv5bIbbuxhuGd7ZtSREUE8xY0atYsU1AiGq6CBbVHuTx-RvmYhHL0v7I5Q2fTw1qaV1vnfPkgitFitpsYMy7yQCw2wz3S7MP3bpoiTBYQ-50PfHVT2C85hVw5LrMCEdrZpp9N4BQERA6Nk3yKPz-VeUyzrpAwCh-8GpZoDLzbUKvFAPPzmfw8Hh6WTzcdmHx7fatIfLQ4LFQh2hFA',
+  //   },
+  //   {
+  //     id: 'c2',
+  //     name: 'Home & Kitchen',
+  //     image:
+  //       'https://lh3.googleusercontent.com/aida-public/AB6AXuBEBToWYF5PhRf7fJbxG6MATAEjdEhIpjso6vJTrv6P1NAn9OEOBSjBkM9lbBAO1n0ehwG9vozAYOUYY32tyrjPsM8_lpuT37tCPc2xIcNOV0UDWkrCXGWuKbga8Pa8y-7dc9XXZdvLu6E0Xd_UX-JoDNlsPzuVqWETUUYUhDvmHf459PasWkk8xIlnfJq7ktpcPKDuxsFFQc-aJyH0ThrVyDhri9P9rhHoYAI0IeTmrbx1g3ovaCAJELXh3gpIXrBps2IQ3C5bDoo',
+  //   },
+  //   {
+  //     id: 'c3',
+  //     name: 'Fashion',
+  //     image:
+  //       'https://lh3.googleusercontent.com/aida-public/AB6AXuBWpX5r4VLm-LXUq9Qg2YyF7K6TA_e-cy30AkBgLMxMy282kKbZrUUap7-0d5WLYVhq8SrdpRnntO-B9jM1cBt_3fdNoN9kz7G2u_hULiLHnaDmTBG9lqi2qPSsvZFJwCyIQtjoSnXrj2iMeJglIQCg0Q6Z7cNvvvoLJLxchkSbn-EvqmRRXFdqKJdt95kFGpAFtP_ntzkhQNeTfBqUrNyaLtXzw6aiswShIRwiPzufIYFpc-nF-nP9HV2rpF7_YY940z8RkG-9e_c',
+  //   },
+  //   {
+  //     id: 'c4',
+  //     name: 'Books',
+  //     image:
+  //       'https://lh3.googleusercontent.com/aida-public/AB6AXuDcg3wKOyc6aIalRW8x-QWIdo0-zRIa0DuOp9FI2Q1-hgEmhMwGhUnk1OI9JgNDMGxKi5NbIRHcAICd1a4LoVOeQxuCrVDagNDVtMAigADTRW2v0grvuatriJlVgWStuwdEleTUjKJZIUBsW6JZPo1RY7U4PswY9Ot8Awt2YfTz1pcByyJEI2L4GFQsOoiaRGZijvPGYGINSC-jPVp7abSFkfLyVBTPyUZi9xuHHW2g6LA9G9-Qe8Y2Nu_fK-tubqBLjl_YHlqYkes',
+  //   },
+  // ];
 
   const trending: TrendItem[] = [
     {
@@ -117,8 +181,8 @@ const Home: React.FC = () => {
           image={carouselImage}
         /> */}
         <Feature />
-        <TopSellers products={products} />
-        <Categories categories={categories} />
+        <TopSellers products={topSellerProducts} loading={topSellersLoading} />
+        {/* <Categories categories={categories} /> */}
         <PromoBanner title="Limited-Time Offers" subtitle="Get ready for our seasonal sale event!" image={promoImage} />
         <TrendingRow items={trending} />
       </div>
