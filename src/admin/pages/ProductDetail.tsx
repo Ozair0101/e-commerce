@@ -26,6 +26,7 @@ const ProductDetailPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [product, setProduct] = useState<Product | null>(null);
+  const [activeImageId, setActiveImageId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [toast, setToast] = useState<{
     message: string;
@@ -56,6 +57,13 @@ const ProductDetailPage: React.FC = () => {
         const response = await api.get(`/products/${id}`);
         const data = response.data.data || response.data;
         setProduct(data);
+
+        if (data && data.images && data.images.length > 0) {
+          const primary = data.images.find((img: ProductImage) => img.is_primary);
+          setActiveImageId(primary ? primary.id : data.images[0].id);
+        } else {
+          setActiveImageId(null);
+        }
       } catch (error: any) {
         console.error('Error fetching product:', error);
         let message = 'Failed to load product details';
@@ -183,11 +191,22 @@ const ProductDetailPage: React.FC = () => {
 
                 <div className="aspect-video w-full rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden">
                   {product.images && product.images.length > 0 ? (
-                    <img
-                      src={resolveImageUrl(product.images.find((img) => img.is_primary)?.url || product.images[0].url)}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
+                    (() => {
+                      const fallbackMain =
+                        product.images.find((img) => img.is_primary) || product.images[0];
+                      const mainImage =
+                        (activeImageId
+                          ? product.images.find((img) => img.id === activeImageId)
+                          : fallbackMain) || fallbackMain;
+
+                      return (
+                        <img
+                          src={resolveImageUrl(mainImage.url)}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      );
+                    })()
                   ) : (
                     <span className="material-symbols-outlined text-4xl text-gray-300">image</span>
                   )}
@@ -196,10 +215,12 @@ const ProductDetailPage: React.FC = () => {
                 {product.images && product.images.length > 1 && (
                   <div className="flex gap-3 overflow-x-auto pb-1">
                     {product.images.map((img) => (
-                      <div
+                      <button
                         key={img.id}
-                        className={`w-20 h-20 rounded-md border overflow-hidden flex-shrink-0 ${
-                          img.is_primary
+                        type="button"
+                        onClick={() => setActiveImageId(img.id)}
+                        className={`w-20 h-20 rounded-md border overflow-hidden flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-orange-400 ${
+                          img.id === activeImageId || (!activeImageId && img.is_primary)
                             ? 'border-orange-500 ring-1 ring-orange-300'
                             : 'border-gray-200'
                         }`}
@@ -209,7 +230,7 @@ const ProductDetailPage: React.FC = () => {
                           alt={product.name}
                           className="w-full h-full object-cover"
                         />
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
