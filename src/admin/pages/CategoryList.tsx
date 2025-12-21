@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
 import Toast from '../../components/Toast';
 
@@ -13,9 +13,17 @@ interface Category {
 const CategoryList: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info' | 'warning';
+    onConfirm?: () => void;
+    onCancel?: () => void;
+  } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name');
+  const [deleteCandidate, setDeleteCandidate] = useState<string | null>(null);
+
+  const navigate = useNavigate();
 
   // Fetch categories from backend
   useEffect(() => {
@@ -52,6 +60,7 @@ const CategoryList: React.FC = () => {
       await api.delete(`/categories/${id}`);
       setCategories(categories.filter(category => category.category_id !== id));
       setToast({ message: 'Category deleted successfully', type: 'success' });
+      setDeleteCandidate(null);
     } catch (error: any) {
       console.error('Error deleting category:', error);
       let errorMessage = 'Failed to delete category';
@@ -59,11 +68,32 @@ const CategoryList: React.FC = () => {
         errorMessage = error.response.data.message;
       }
       setToast({ message: errorMessage, type: 'error' });
+      setDeleteCandidate(null);
     }
+  };
+
+  const handleRequestDeleteCategory = (id: string) => {
+    setDeleteCandidate(id);
+    setToast({
+      message: 'Are you sure you want to delete this category?',
+      type: 'warning',
+      onConfirm: async () => {
+        await handleDeleteCategory(id);
+      },
+      onCancel: () => {
+        setDeleteCandidate(null);
+        setToast(null);
+      },
+    });
+  };
+
+  const handleEditCategory = (category: Category) => {
+    navigate('/admin/add-category', { state: { category } });
   };
 
   const closeToast = () => {
     setToast(null);
+    setDeleteCandidate(null);
   };
 
   return (
@@ -74,6 +104,8 @@ const CategoryList: React.FC = () => {
           message={toast.message} 
           type={toast.type} 
           onClose={closeToast} 
+          onConfirm={toast.onConfirm}
+          onCancel={toast.onCancel}
         />
       )}
       
@@ -166,12 +198,15 @@ const CategoryList: React.FC = () => {
                             <button className="p-1.5 sm:p-2 text-gray-500 hover:text-orange-500 rounded-full hover:bg-orange-50">
                               <span className="material-symbols-outlined text-base sm:text-lg">visibility</span>
                             </button>
-                            <button className="p-1.5 sm:p-2 text-gray-500 hover:text-orange-500 rounded-full hover:bg-orange-50">
+                            <button 
+                              className="p-1.5 sm:p-2 text-gray-500 hover:text-orange-500 rounded-full hover:bg-orange-50"
+                              onClick={() => handleEditCategory(category)}
+                            >
                               <span className="material-symbols-outlined text-base sm:text-lg">edit</span>
                             </button>
                             <button 
                               className="p-1.5 sm:p-2 text-gray-500 hover:text-red-500 rounded-full hover:bg-red-50"
-                              onClick={() => handleDeleteCategory(category.category_id)}
+                              onClick={() => handleRequestDeleteCategory(category.category_id)}
                             >
                               <span className="material-symbols-outlined text-base sm:text-lg">delete</span>
                             </button>

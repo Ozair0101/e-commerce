@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import api from '../../utils/api';
 import Toast from '../../components/Toast';
 
@@ -8,22 +8,48 @@ interface Category {
   name: string;
 }
 
+interface ExistingProductImage {
+  id: number;
+  url: string;
+  is_primary?: boolean;
+}
+
+interface ProductState {
+  product_id: number;
+  name: string;
+  description: string | null;
+  price: number;
+  discount_price: number | null;
+  is_active: boolean;
+  stock_quantity: number;
+  category_id: string;
+  images?: ExistingProductImage[];
+}
+
 const AddProductPage: React.FC = () => {
+  const location = useLocation();
+  const state = location.state as { product?: ProductState } | null;
+  const editingProduct = state?.product;
+
   const [productData, setProductData] = useState({
-    name: '',
-    category_id: '',
-    price: '',
-    discount_price: '',
-    stock_quantity: '',
+    name: editingProduct?.name ?? '',
+    category_id: editingProduct?.category_id?.toString() ?? '',
+    price: editingProduct ? String(editingProduct.price) : '',
+    discount_price: editingProduct && editingProduct.discount_price !== null ? String(editingProduct.discount_price) : '',
+    stock_quantity: editingProduct ? String(editingProduct.stock_quantity) : '',
     sku: '',
-    description: '',
-    status: 'published'
+    description: editingProduct?.description ?? '',
+    status: editingProduct?.is_active ? '1' : '0'
   });
-  
+
   const [categories, setCategories] = useState<Category[]>([]);
+  const [existingImages, setExistingImages] = useState<ExistingProductImage[]>(editingProduct?.images ?? []);
+  const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
+  const [newImages, setNewImages] = useState<{ file: File; previewUrl: string; is_primary: boolean }[]>([]);
+
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
-  
+
   const navigate = useNavigate();
 
   // Fetch categories from backend
@@ -49,40 +75,97 @@ const AddProductPage: React.FC = () => {
     }));
   };
 
+  const handleExistingImageRemove = (id: number) => {
+    setExistingImages(prev => prev.filter(img => img.id !== id));
+    setDeletedImageIds(prev => [...prev, id]);
+  };
+
+  const handleNewImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    setNewImages(prev => {
+      const startEmpty = prev.length === 0 && existingImages.length === 0;
+      return [
+        ...prev,
+        ...files.map((file, index) => ({
+          file,
+          previewUrl: URL.createObjectURL(file),
+          is_primary: startEmpty && index === 0,
+        })),
+      ];
+    });
+  };
+
+  const handleSetPrimaryNewImage = (index: number) => {
+    setNewImages(prev => prev.map((img, i) => ({
+      ...img,
+      is_primary: i === index,
+    })));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (!productData.name || !productData.category_id || !productData.price || !productData.stock_quantity) {
       setToast({ message: 'Please fill in all required fields', type: 'error' });
       return;
     }
-    
+
     try {
       setLoading(true);
-      
-      // Prepare data for submission
-      const productPayload = {
-        ...productData,
-        price: parseFloat(productData.price),
-        discount_price: productData.discount_price ? parseFloat(productData.discount_price) : null,
-        stock_quantity: parseInt(productData.stock_quantity)
-      };
-      
-      // Send data to backend
-      await api.post('/products', productPayload);
-      
-      // Show success message
-      setToast({ message: 'Product added successfully!', type: 'success' });
-      
+
+      const formData = new FormData();
+
+      formData.append('name', productData.name);
+      formData.append('description', productData.description || '');
+      formData.append('price', productData.price);
+      if (productData.discount_price) {
+        formData.append('discount_price', productData.discount_price);
+      }
+      formData.append('stock_quantity', productData.stock_quantity);
+      formData.append('category_id', productData.category_id);
+      formData.append('is_active', productData.status); // '1' or '0'
+
+      // Existing images to delete
+      deletedImageIds.forEach(id => {
+        formData.append('deleted_image_ids[]', String(id));
+      });
+
+      // New image files
+      newImages.forEach(img => {
+        formData.append('images_files[]', img.file);
+      });
+
+      // Primary index among new images (if any new images)
+      const primaryIndex = newImages.findIndex(img => img.is_primary);
+      if (primaryIndex >= 0) {
+        formData.append('primary_index', String(primaryIndex));
+      }
+
+      if (editingProduct) {
+        formData.append('_method', 'PUT');
+        await api.post(`/products/${editingProduct.product_id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        setToast({ message: 'Product updated successfully!', type: 'success' });
+      } else {
+        await api.post('/products', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        setToast({ message: 'Product added successfully!', type: 'success' });
+      }
+
       // Redirect to products page after a delay
       setTimeout(() => {
         navigate('/admin/products');
       }, 1500);
+
     } catch (error: any) {
-      console.error('Error adding product:', error);
-      let errorMessage = 'Failed to add product. Please try again.';
-      
+      console.error('Error saving product:', error);
+      let errorMessage = 'Failed to save product. Please try again.';
+
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.data?.errors) {
@@ -91,7 +174,7 @@ const AddProductPage: React.FC = () => {
         const firstError = error.response.data.errors[firstErrorField][0];
         errorMessage = firstError;
       }
-      
+
       setToast({ message: errorMessage, type: 'error' });
     } finally {
       setLoading(false);
@@ -103,20 +186,20 @@ const AddProductPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 bg-gray-50 min-h-screen">
+    <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
       {/* Toast notification */}
       {toast && (
-        <Toast 
-          message={toast.message} 
-          type={toast.type} 
-          onClose={closeToast} 
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={closeToast}
         />
       )}
-      
+
       <div className="mx-auto">
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Add New Product</h1>
-          <p className="text-gray-600 mt-1">Create a new product for your store</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{editingProduct ? 'Edit Product' : 'Add New Product'}</h1>
+          <p className="text-gray-600 mt-1">{editingProduct ? 'Update an existing product' : 'Create a new product for your store'}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
@@ -124,7 +207,7 @@ const AddProductPage: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-900">Product Information</h2>
             <p className="text-gray-600 text-sm mt-1">Basic details about your product</p>
           </div>
-          
+
           <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Product Name */}
             <div className="md:col-span-2">
@@ -142,7 +225,7 @@ const AddProductPage: React.FC = () => {
                 placeholder="Enter product name"
               />
             </div>
-            
+
             {/* Category */}
             <div>
               <label htmlFor="category_id" className="block text-sm font-medium text-gray-700 mb-1">
@@ -162,7 +245,7 @@ const AddProductPage: React.FC = () => {
                 ))}
               </select>
             </div>
-            
+
             {/* Price */}
             <div>
               <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
@@ -184,7 +267,7 @@ const AddProductPage: React.FC = () => {
                 />
               </div>
             </div>
-            
+
             {/* Discount Price */}
             <div>
               <label htmlFor="discount_price" className="block text-sm font-medium text-gray-700 mb-1">
@@ -205,7 +288,7 @@ const AddProductPage: React.FC = () => {
                 />
               </div>
             </div>
-            
+
             {/* Stock Quantity */}
             <div>
               <label htmlFor="stock_quantity" className="block text-sm font-medium text-gray-700 mb-1">
@@ -223,7 +306,7 @@ const AddProductPage: React.FC = () => {
                 placeholder="Enter quantity"
               />
             </div>
-            
+
             {/* Status */}
             <div>
               <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
@@ -236,12 +319,11 @@ const AddProductPage: React.FC = () => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 sm:px-4 sm:py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               >
-                <option value="published">Published</option>
-                <option value="draft">Draft</option>
-                <option value="archived">Archived</option>
+                <option value="1">Active</option>
+                <option value="0">Inactive</option>
               </select>
             </div>
-            
+
             {/* Description */}
             <div className="md:col-span-2">
               <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
@@ -258,23 +340,70 @@ const AddProductPage: React.FC = () => {
               />
             </div>
           </div>
-          
-          {/* Image Upload Section */}
+
+          {/* Images Section */}
           <div className="p-4 sm:p-6 border-t border-gray-200">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Product Images</h3>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 sm:p-8 text-center">
-              <span className="material-symbols-outlined text-3xl sm:text-4xl text-gray-400 mb-2 sm:mb-3">cloud_upload</span>
-              <h4 className="text-base sm:text-lg font-medium text-gray-900 mb-1">Upload images</h4>
-              <p className="text-gray-500 text-sm mb-3 sm:mb-4">PNG, JPG, GIF up to 10MB</p>
-              <button
-                type="button"
-                className="px-3 py-2 sm:px-4 sm:py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-              >
-                Select Files
-              </button>
+            <p className="text-gray-500 text-sm mb-4">Upload one or more images from your device. You can also remove existing images.</p>
+
+            {/* Existing images (editing only) */}
+            {existingImages.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-sm font-semibold text-gray-800 mb-2">Existing Images</h4>
+                <div className="flex flex-wrap gap-3">
+                  {existingImages.map((img) => (
+                    <div key={img.id} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
+                      <img src={img.url} alt="Product" className="w-full h-full object-cover" />
+                      {img.is_primary && (
+                        <span className="absolute top-1 left-1 bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">Primary</span>
+                      )}
+                      <button
+                        type="button"
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]"
+                        onClick={() => handleExistingImageRemove(img.id)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* New image upload */}
+            <div className="space-y-3">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleNewImagesChange}
+                className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+              />
+
+              {newImages.length > 0 && (
+                <div className="flex flex-wrap gap-3 mt-2">
+                  {newImages.map((img, index) => (
+                    <div key={index} className="flex flex-col items-center gap-1">
+                      <div className="w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
+                        <img src={img.previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                      <label className="inline-flex items-center text-xs text-gray-700">
+                        <input
+                          type="radio"
+                          name="primaryNewImage"
+                          className="mr-1"
+                          checked={img.is_primary}
+                          onChange={() => handleSetPrimaryNewImage(index)}
+                        />
+                        Primary
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-          
+
           {/* Form Actions */}
           <div className="p-4 sm:p-6 border-t border-gray-200 flex justify-end gap-2 sm:gap-3">
             <Link
@@ -297,7 +426,7 @@ const AddProductPage: React.FC = () => {
                   Saving...
                 </>
               ) : (
-                'Add Product'
+                editingProduct ? 'Update Product' : 'Add Product'
               )}
             </button>
           </div>
