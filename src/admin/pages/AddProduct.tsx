@@ -44,6 +44,7 @@ const AddProductPage: React.FC = () => {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [existingImages, setExistingImages] = useState<ExistingProductImage[]>(editingProduct?.images ?? []);
+
   const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
   const [newImages, setNewImages] = useState<{ file: File; previewUrl: string; is_primary: boolean }[]>([]);
 
@@ -51,6 +52,23 @@ const AddProductPage: React.FC = () => {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
 
   const navigate = useNavigate();
+
+  const backendOrigin = (() => {
+    try {
+      const base = (api.defaults.baseURL as string) || '';
+      return base ? new URL(base).origin : window.location.origin;
+    } catch {
+      return window.location.origin;
+    }
+  })();
+
+  const resolveImageUrl = (url: string | undefined) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    return `${backendOrigin}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
 
   // Fetch categories from backend
   useEffect(() => {
@@ -353,7 +371,8 @@ const AddProductPage: React.FC = () => {
                 <div className="flex flex-wrap gap-3">
                   {existingImages.map((img) => (
                     <div key={img.id} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
-                      <img src={img.url} alt="Product" className="w-full h-full object-cover" />
+                      <img src={resolveImageUrl(img.url)} alt="Product" className="w-full h-full object-cover" />
+
                       {img.is_primary && (
                         <span className="absolute top-1 left-1 bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">Primary</span>
                       )}
