@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
 
@@ -25,17 +26,14 @@ interface ShopProduct {
   rating: number;
 }
 
-type SortOption = 'featured' | 'priceAsc' | 'rating';
+type SortOption = 'featured';
 
 const Shop: React.FC = () => {
   const [products, setProducts] = useState<ShopProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [selectedPriceRange, setSelectedPriceRange] = useState<string | null>(null);
-  const [minRating, setMinRating] = useState<number | null>(null);
-  const [sortBy, setSortBy] = useState<SortOption>('featured');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [maxPriceFilter, setMaxPriceFilter] = useState<number | null>(null);
 
   const backendOrigin = useMemo(() => {
     try {
@@ -139,70 +137,47 @@ const Shop: React.FC = () => {
     };
   }, [backendOrigin]);
 
-  const toggleBrand = (brand: string) => {
-    setSelectedBrands((prev) =>
-      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand],
-    );
-  };
-
-  const clearFilters = () => {
-    setSelectedBrands([]);
-    setSelectedPriceRange(null);
-    setMinRating(null);
-  };
+  const priceBounds = useMemo(() => {
+    if (products.length === 0) {
+      return { min: 0, max: 0 };
+    }
+    const prices = products.map((p) => getFinalPrice(p));
+    return {
+      min: Math.min(...prices),
+      max: Math.max(...prices),
+    };
+  }, [products]);
 
   const filteredAndSorted = useMemo(() => {
     let list = [...products];
 
-    // Brand filter: match brand text in product name
-    if (selectedBrands.length > 0) {
-      list = list.filter((p) =>
-        selectedBrands.some((b) => p.name.toLowerCase().includes(b.toLowerCase())),
-      );
+    // Text search by product name
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      list = list.filter((p) => p.name.toLowerCase().includes(term));
     }
 
-    // Price range filter on final price
-    if (selectedPriceRange) {
-      list = list.filter((p) => {
-        const price = getFinalPrice(p);
-        switch (selectedPriceRange) {
-          case 'under-500':
-            return price < 500;
-          case '500-1000':
-            return price >= 500 && price <= 1000;
-          case '1000-1500':
-            return price > 1000 && price <= 1500;
-          case '1500-plus':
-            return price > 1500;
-          default:
-            return true;
-        }
-      });
+    // Max price filter using final price (after discount)
+    const effectiveMax =
+      maxPriceFilter !== null && maxPriceFilter > 0
+        ? maxPriceFilter
+        : priceBounds.max;
+
+    if (products.length > 0 && priceBounds.max > 0) {
+      list = list.filter((p) => getFinalPrice(p) <= effectiveMax + 1e-6);
     }
 
-    // Rating filter
-    if (minRating !== null) {
-      list = list.filter((p) => p.rating >= minRating);
-    }
-
-    // Sorting
-    if (sortBy === 'priceAsc') {
-      list.sort((a, b) => getFinalPrice(a) - getFinalPrice(b));
-    } else if (sortBy === 'rating') {
-      list.sort((a, b) => b.rating - a.rating);
-    } else {
-      // featured: put discounted first, then by newest id desc
-      list.sort((a, b) => {
-        const aDiscount = a.discountPrice !== null && a.discountPrice < a.price;
-        const bDiscount = b.discountPrice !== null && b.discountPrice < b.price;
-        if (aDiscount && !bDiscount) return -1;
-        if (!aDiscount && bDiscount) return 1;
-        return b.id - a.id;
-      });
-    }
+    // Featured sorting: discounted first, then newest (by id desc)
+    list.sort((a, b) => {
+      const aDiscount = a.discountPrice !== null && a.discountPrice < a.price;
+      const bDiscount = b.discountPrice !== null && b.discountPrice < b.price;
+      if (aDiscount && !bDiscount) return -1;
+      if (!aDiscount && bDiscount) return 1;
+      return b.id - a.id;
+    });
 
     return list;
-  }, [products, selectedBrands, selectedPriceRange, minRating, sortBy]);
+  }, [products, searchTerm, maxPriceFilter, priceBounds]);
 
   const renderStars = (rating: number) => {
     const stars = [];
@@ -234,7 +209,7 @@ const Shop: React.FC = () => {
         <span className="text-gray-800 text-sm font-medium leading-normal">Shop</span>
       </div>
 
-      {/* Page Heading & Sorting Chips */}
+      {/* Page Heading, Search & Price Range */}
       <div className="flex flex-col sm:flex-row flex-wrap justify-between items-start sm:items-center gap-3 py-4">
         <div className="flex min-w-72 flex-col gap-1">
           <p className="text-3xl font-black leading-tight tracking-[-0.033em]">All Products</p>
@@ -244,40 +219,50 @@ const Shop: React.FC = () => {
               : `${filteredAndSorted.length} product${filteredAndSorted.length === 1 ? '' : 's'} found`}
           </p>
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          <button
-            type="button"
-            onClick={() => setSortBy('featured')}
-            className={`flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg pl-4 pr-3 border text-sm font-medium leading-normal ${
-              sortBy === 'featured'
-                ? 'bg-orange-500 text-white border-orange-500'
-                : 'bg-gray-100 text-gray-800 border-transparent'
-            }`}
-          >
-            <span>Sort by: Featured</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setSortBy('priceAsc')}
-            className={`flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg pl-4 pr-3 border text-sm font-medium leading-normal ${
-              sortBy === 'priceAsc'
-                ? 'bg-orange-500 text-white border-orange-500'
-                : 'bg-gray-100 text-gray-800 border-transparent'
-            }`}
-          >
-            <span>Price: Low to High</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setSortBy('rating')}
-            className={`flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg pl-4 pr-3 border text-sm font-medium leading-normal ${
-              sortBy === 'rating'
-                ? 'bg-orange-500 text-white border-orange-500'
-                : 'bg-gray-100 text-gray-800 border-transparent'
-            }`}
-          >
-            <span>Avg. Customer Review</span>
-          </button>
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search products..."
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 pl-9 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:border-orange-500"
+            />
+            <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-base">
+              search
+            </span>
+          </div>
+          {products.length > 0 && priceBounds.max > 0 && (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-xs sm:text-sm">
+              <span className="font-medium text-gray-700">Max price:</span>
+              <div className="flex items-center gap-2 w-full sm:w-56">
+                <span className="text-gray-500 text-xs">
+                  ${priceBounds.min.toFixed(0)}
+                </span>
+                <input
+                  type="range"
+                  min={priceBounds.min}
+                  max={priceBounds.max}
+                  step={1}
+                  value={
+                    maxPriceFilter !== null && maxPriceFilter > 0
+                      ? maxPriceFilter
+                      : priceBounds.max
+                  }
+                  onChange={(e) => setMaxPriceFilter(Number(e.target.value))}
+                  className="w-full accent-orange-500"
+                />
+                <span className="text-gray-900 text-xs font-semibold whitespace-nowrap">
+                  $
+                  {(
+                    maxPriceFilter !== null && maxPriceFilter > 0
+                      ? maxPriceFilter
+                      : priceBounds.max
+                  ).toFixed(0)}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
