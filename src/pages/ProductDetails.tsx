@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import api from '../utils/api'
 
 interface ProductImage {
@@ -168,14 +168,20 @@ const ProductDetail: React.FC = () => {
     const images = product.images || []
 
     return (
-      <main className="flex flex-1 justify-center py-6 bg-white">
+      <main className="w-full flex-1 flex justify-center bg-white py-6">
         <div className="flex flex-col w-full max-w-screen-xl mx-auto px-4 sm:px-6 md:px-10">
 
           {/* Breadcrumbs */}
-          <div className="flex flex-wrap gap-2 pb-4 text-sm">
-            <span className="text-gray-500 font-medium">Category</span>
-            <span className="text-gray-400 font-medium">/</span>
-            <span className="text-gray-800 font-medium">{product.category_id || 'Products'}</span>
+          <div className="flex flex-wrap gap-2 py-4">
+            <Link className="text-gray-500 hover:text-orange-500 text-sm font-medium leading-normal" to="/">
+              Home
+            </Link>
+            <span className="text-gray-500 text-sm font-medium leading-normal">/</span>
+            <span className="text-gray-800 text-sm font-medium leading-normal">Shop</span>
+            <span className="text-gray-500 text-sm font-medium leading-normal">/</span>
+            <span className="text-gray-800 text-sm font-medium leading-normal line-clamp-1 max-w-xs sm:max-w-sm md:max-w-md">
+              {product.name}
+            </span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
@@ -238,93 +244,107 @@ const ProductDetail: React.FC = () => {
 
             {/* Right: Details */}
             <div className="lg:col-span-4">
-              <h1 className="text-gray-900 tracking-tight text-2xl font-bold leading-tight">
-                {product.name}
-              </h1>
-              <p className="text-orange-500 text-sm cursor-default mt-1">Product ID: {product.product_id}</p>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="font-bold">{rating.toFixed(1)}</span>
-                {renderStars(rating)}
-                <span className="text-gray-500 text-sm cursor-default">Ratings</span>
-              </div>
-
-              <div className="my-4 py-4 border-y border-gray-200">
-                <div className="flex items-baseline gap-2">
-                  {hasDiscount && percent > 0 && (
-                    <span className="text-sm -translate-y-1.5 text-red-600">-{percent}%</span>
-                  )}
-                  <span className="text-3xl font-semibold text-red-600">
-                    ${finalPrice.toFixed(2)}
-                  </span>
+              <div className="bg-white rounded-[2rem] p-5 md:p-6 shadow-sm border border-gray-200 flex flex-col gap-4">
+                <div>
+                  <h1 className="text-gray-900 tracking-tight text-2xl font-bold leading-tight">
+                    {product.name}
+                  </h1>
+                  <p className="text-orange-500 text-xs sm:text-sm cursor-default mt-1">
+                    Product ID: {product.product_id}
+                  </p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="font-bold text-sm sm:text-base">{rating.toFixed(1)}</span>
+                    {renderStars(rating)}
+                    <span className="text-gray-500 text-xs sm:text-sm cursor-default">Ratings</span>
+                  </div>
                 </div>
-                {hasDiscount && (
-                  <>
-                    <p className="text-sm text-gray-500">
-                      List Price:{' '}
-                      <span className="line-through">${Number(product.price).toFixed(2)}</span>
-                    </p>
-                    <p className="text-sm mt-1">
-                      Save{' '}
-                      <span className="font-bold text-green-600">
-                        ${savings.toFixed(2)}
+
+                <div className="py-3 border-y border-gray-200">
+                  <div className="flex items-baseline gap-2">
+                    {hasDiscount && percent > 0 && (
+                      <span className="text-xs sm:text-sm -translate-y-1 text-red-600 bg-red-50 rounded-full px-2 py-0.5 font-semibold">
+                        -{percent}%
                       </span>
+                    )}
+                    <span className="text-3xl font-semibold text-gray-900">
+                      ${finalPrice.toFixed(2)}
+                    </span>
+                  </div>
+                  {hasDiscount && (
+                    <>
+                      <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                        List Price:{' '}
+                        <span className="line-through">${Number(product.price).toFixed(2)}</span>
+                      </p>
+                      <p className="text-xs sm:text-sm mt-1 text-green-700">
+                        Save{' '}
+                        <span className="font-bold">
+                          ${savings.toFixed(2)}
+                        </span>
+                        {percent > 0 ? ` (${percent}% )` : ''}
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 flex flex-col gap-3">
+                  <div>
+                    <p
+                      className={`text-sm sm:text-base font-bold ${
+                        product.stock_quantity > 0
+                          ? 'text-green-600'
+                          : 'text-red-600'
+                      }`}
+                    >
+                      {product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}
                     </p>
-                  </>
-                )}
-              </div>
+                    <p className="text-xs sm:text-sm mt-1">
+                      Ships from: <span className="font-semibold">PrimeCommerce.com</span>
+                    </p>
+                    <p className="text-xs sm:text-sm">
+                      Sold by: <span className="font-semibold">Your Store</span>
+                    </p>
+                    <p className="text-xs sm:text-sm mt-1">Available quantity: {product.stock_quantity}</p>
+                  </div>
 
-              <div className="p-4 border border-gray-200 rounded-xl bg-gray-50">
-                <p
-                  className={`text-lg font-bold ${
-                    product.stock_quantity > 0
-                      ? 'text-green-600'
-                      : 'text-red-600'
-                  }`}
-                >
-                  {product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}
-                </p>
-                <p className="text-sm mt-2">
-                  Ships from: <span className="font-semibold">PrimeCommerce.com</span>
-                </p>
-                <p className="text-sm">
-                  Sold by: <span className="font-semibold">Your Store</span>
-                </p>
-                <p className="text-sm mt-1">Available quantity: {product.stock_quantity}</p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <label className="text-xs sm:text-sm font-medium" htmlFor="quantity">
+                      Qty:
+                    </label>
+                    <select
+                      id="quantity"
+                      className="form-select w-20 h-8 text-xs sm:text-sm rounded-lg bg-white border border-gray-300 focus:ring-orange-500 focus:border-orange-500"
+                      defaultValue={1}
+                    >
+                      {[1, 2, 3, 4, 5].map((q) => (
+                        <option key={q} value={q}>
+                          {q}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                <div className="mt-4 flex items-center gap-2">
-                  <label className="text-sm font-medium" htmlFor="quantity">
-                    Qty:
-                  </label>
-                  <select
-                    id="quantity"
-                    className="form-select w-20 h-8 text-sm rounded-lg bg-white border border-gray-300 focus:ring-orange-500 focus:border-orange-500"
-                    defaultValue={1}
-                  >
-                    {[1, 2, 3, 4, 5].map((q) => (
-                      <option key={q} value={q}>
-                        {q}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-3 mt-4">
-                  <button
-                    type="button"
-                    className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-11 px-6 bg-orange-500 text-white text-base font-medium leading-normal tracking-[0.015em] hover:bg-orange-600 transition-all"
-                  >
-                    <span className="truncate">Add to Cart</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-11 px-6 bg-gray-900 text-white text-base font-medium leading-normal tracking-[0.015em] hover:bg-black transition-all"
-                  >
-                    <span className="truncate">Buy Now</span>
-                  </button>
-                </div>
-                <div className="flex items-center gap-2 mt-4 text-sm text-gray-500">
-                  <span className="material-symbols-outlined !text-base">lock</span>
-                  <span>Secure transaction</span>
+                  <div className="flex flex-col gap-2 mt-2">
+                    <button
+                      type="button"
+                      className="w-full h-11 rounded-full bg-gray-800 text-white text-sm sm:text-base font-semibold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2 group/btn shadow-sm"
+                    >
+                      <span className="truncate">Add to Cart</span>
+                      <span className="material-symbols-outlined text-[18px] group-hover/btn:translate-x-1 transition-transform">
+                        shopping_bag
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      className="w-full h-11 rounded-full bg-white text-gray-900 border border-gray-300 text-sm sm:text-base font-semibold hover:border-orange-500 hover:text-orange-500 transition-all flex items-center justify-center gap-2"
+                    >
+                      <span className="truncate">Buy Now</span>
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1 text-xs sm:text-sm text-gray-500">
+                    <span className="material-symbols-outlined !text-base">lock</span>
+                    <span>Secure transaction</span>
+                  </div>
                 </div>
               </div>
             </div>
