@@ -9,6 +9,12 @@ interface ProductImage {
   is_primary: boolean;
 }
 
+interface Category {
+  category_id: number;
+  name: string;
+  description?: string | null;
+}
+
 interface Product {
   product_id: number;
   name: string;
@@ -18,6 +24,7 @@ interface Product {
   is_active: boolean;
   stock_quantity: number;
   category_id: string;
+  category?: Category;
   images?: ProductImage[];
 }
 
@@ -148,7 +155,7 @@ const ProductDetailPage: React.FC = () => {
 
             {product && (
               <p className="text-xs sm:text-sm text-gray-500">
-                Product ID: #{product.product_id} • Category ID: {product.category_id}
+                Product ID: #{product.product_id} • Category: {product.category?.name || `ID: ${product.category_id}`}
               </p>
             )}
           </div>
@@ -247,7 +254,7 @@ const ProductDetailPage: React.FC = () => {
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs uppercase tracking-wide text-gray-500">Category ID</p>
-                    <p className="text-sm sm:text-base text-gray-900">{product.category_id}</p>
+                    <p className="text-sm sm:text-base text-gray-900">{product.category?.name || `ID: ${product.category_id}`}</p>
                   </div>
                 </div>
 
