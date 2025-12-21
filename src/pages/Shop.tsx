@@ -281,121 +281,7 @@ const Shop: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8 mt-4">
-        {/* Sticky Left Sidebar (Filter Panel) */}
-        <aside className="w-full md:w-64 lg:w-72 md:sticky top-24 self-start flex-shrink-0">
-          <div className="flex flex-col gap-6">
-            <div>
-              <div className="flex items-center justify-between pb-3">
-                <h3 className="text-lg font-bold leading-tight tracking-[-0.015em]">Filter by</h3>
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="text-xs text-orange-500 hover:underline"
-                >
-                  Clear all
-                </button>
-              </div>
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2">
-                  <h4 className="font-semibold text-sm">Brand (by name)</h4>
-                  {['Apple', 'Dell', 'HP', 'Lenovo'].map((brand) => (
-                    <label key={brand} className="flex items-center gap-2">
-                      <input
-                        className="form-checkbox rounded border-gray-300 bg-transparent text-orange-500 focus:ring-orange-500/50"
-                        type="checkbox"
-                        checked={selectedBrands.includes(brand)}
-                        onChange={() => toggleBrand(brand)}
-                      />
-                      <span>{brand}</span>
-                    </label>
-                  ))}
-                </div>
-
-                <div className="border-t border-gray-200" />
-
-                <div className="flex flex-col gap-2">
-                  <h4 className="font-semibold text-sm">Price</h4>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedPriceRange('under-500')}
-                    className={`text-left text-sm hover:text-orange-500 ${
-                      selectedPriceRange === 'under-500' ? 'text-orange-500 font-semibold' : ''
-                    }`}
-                  >
-                    Under $500
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedPriceRange('500-1000')}
-                    className={`text-left text-sm hover:text-orange-500 ${
-                      selectedPriceRange === '500-1000' ? 'text-orange-500 font-semibold' : ''
-                    }`}
-                  >
-                    $500 to $1000
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedPriceRange('1000-1500')}
-                    className={`text-left text-sm hover:text-orange-500 ${
-                      selectedPriceRange === '1000-1500' ? 'text-orange-500 font-semibold' : ''
-                    }`}
-                  >
-                    $1000 to $1500
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedPriceRange('1500-plus')}
-                    className={`text-left text-sm hover:text-orange-500 ${
-                      selectedPriceRange === '1500-plus' ? 'text-orange-500 font-semibold' : ''
-                    }`}
-                  >
-                    $1500 &amp; Above
-                  </button>
-                </div>
-
-                <div className="border-t border-gray-200" />
-
-                <div className="flex flex-col gap-2">
-                  <h4 className="font-semibold text-sm">Customer Rating</h4>
-                  <button
-                    type="button"
-                    onClick={() => setMinRating(4)}
-                    className={`flex items-center gap-1 text-left hover:text-orange-500 text-sm ${
-                      minRating === 4 ? 'text-orange-500 font-semibold' : ''
-                    }`}
-                  >
-                    <div className="flex text-orange-500">
-                      <span className="material-symbols-outlined !text-xl">star</span>
-                      <span className="material-symbols-outlined !text-xl">star</span>
-                      <span className="material-symbols-outlined !text-xl">star</span>
-                      <span className="material-symbols-outlined !text-xl">star</span>
-                      <span className="material-symbols-outlined !text-xl text-gray-300">star</span>
-                    </div>
-                    <span>&amp; Up</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMinRating(3)}
-                    className={`flex items-center gap-1 text-left hover:text-orange-500 text-sm ${
-                      minRating === 3 ? 'text-orange-500 font-semibold' : ''
-                    }`}
-                  >
-                    <div className="flex text-orange-500">
-                      <span className="material-symbols-outlined !text-xl">star</span>
-                      <span className="material-symbols-outlined !text-xl">star</span>
-                      <span className="material-symbols-outlined !text-xl">star</span>
-                      <span className="material-symbols-outlined !text-xl text-gray-300">star</span>
-                      <span className="material-symbols-outlined !text-xl text-gray-300">star</span>
-                    </div>
-                    <span>&amp; Up</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </aside>
-
+      <div className="mt-4">
         {/* Product Grid */}
         <div className="flex-1">
           {error && (
@@ -405,7 +291,7 @@ const Shop: React.FC = () => {
           )}
 
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {Array.from({ length: 9 }).map((_, idx) => (
                 <div
                   key={idx}
@@ -423,7 +309,7 @@ const Shop: React.FC = () => {
               No products match the selected filters.
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {filteredAndSorted.map((p) => {
                 const hasDiscount = p.discountPrice !== null && p.discountPrice < p.price;
                 const finalPrice = hasDiscount ? p.discountPrice! : p.price;
