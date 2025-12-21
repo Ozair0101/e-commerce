@@ -32,6 +32,7 @@ const Shop: React.FC = () => {
   const [products, setProducts] = useState<ShopProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [maxPriceFilter, setMaxPriceFilter] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -138,6 +139,16 @@ const Shop: React.FC = () => {
     };
   }, [backendOrigin]);
 
+  // Debounce search input so we don't refilter on every keystroke
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      setSearchTerm(searchInput.trim());
+      setCurrentPage(1);
+    }, 250);
+
+    return () => window.clearTimeout(handle);
+  }, [searchInput]);
+
   const priceBounds = useMemo(() => {
     if (products.length === 0) {
       return { min: 0, max: 0 };
@@ -232,8 +243,8 @@ const Shop: React.FC = () => {
           <div className="relative w-full sm:w-64">
             <input
               type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search products..."
               className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 pl-9 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:border-orange-500"
             />
@@ -258,7 +269,10 @@ const Shop: React.FC = () => {
                       ? maxPriceFilter
                       : priceBounds.max
                   }
-                  onChange={(e) => setMaxPriceFilter(Number(e.target.value))}
+                  onChange={(e) => {
+                    setMaxPriceFilter(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
                   className="w-full accent-orange-500"
                 />
                 <span className="text-gray-900 text-xs font-semibold whitespace-nowrap">

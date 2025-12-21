@@ -32,7 +32,9 @@ const ProductPage: React.FC = () => {
     onCancel?: () => void;
   } | null>(null);
 
+  const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+
   const [sortBy, setSortBy] = useState('latest');
 
   const navigate = useNavigate();
@@ -92,6 +94,14 @@ const ProductPage: React.FC = () => {
 
     fetchProducts();
   }, []);
+
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      setSearchTerm(searchInput.trim());
+    }, 250);
+
+    return () => window.clearTimeout(handle);
+  }, [searchInput]);
 
   const filteredProducts = products.filter(product => {
     const matchesSearch =
@@ -192,8 +202,8 @@ const ProductPage: React.FC = () => {
                   type="text"
                   placeholder="Search products..."
                   className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                 />
               </div>
 
