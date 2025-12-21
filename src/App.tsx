@@ -12,6 +12,7 @@ const About = lazy(() => import('./pages/About'))
 const Shop = lazy(() => import('./pages/Shop'))
 const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))
+const ProductDetails = lazy(() => import('./pages/ProductDetails'))
 
 // Admin pages (lazy loaded)
 const Dashboard = lazy(() => import('./admin/pages/dashboard'))
@@ -72,6 +73,7 @@ function App() {
                         <Route path="/" element={<Home />} />
                         <Route path="/about" element={<About />} />
                         <Route path="/shop" element={<Shop />} />
+                        <Route path="/product/:id" element={<ProductDetails />} />
                       </Routes>
                     </Suspense>
                   </main>

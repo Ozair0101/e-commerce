@@ -330,7 +330,10 @@ const Shop: React.FC = () => {
                       key={p.id}
                       className="group bg-white rounded-[2rem] p-3 shadow-sm hover:shadow-xl hover:shadow-orange-500/10 transition-all duration-300 hover:-translate-y-1 border border-gray-200 hover:border-orange-500/20"
                     >
-                      <div className="relative aspect-square w-full rounded-[1.5rem] overflow-hidden mb-4 bg-gray-100">
+                      <Link
+                        to={`/product/${p.id}`}
+                        className="block relative aspect-square w-full rounded-[1.5rem] overflow-hidden mb-4 bg-gray-100"
+                      >
                         <div className="absolute top-3 left-3 bg-white/90 backdrop-blur text-gray-800 text-xs font-bold px-3 py-1.5 rounded-full z-10 shadow-sm">
                           Product
                         </div>
@@ -350,10 +353,12 @@ const Shop: React.FC = () => {
                             <span className="material-symbols-outlined text-4xl">image</span>
                           </div>
                         )}
-                      </div>
+                      </Link>
                       <div className="px-2 pb-2 flex flex-col flex-grow">
                         <h3 className="text-lg font-bold text-gray-800 mb-1 group-hover:text-orange-500 transition-colors line-clamp-2">
-                          {p.name}
+                          <Link to={`/product/${p.id}`} className="hover:text-orange-500">
+                            {p.name}
+                          </Link>
                         </h3>
                         <div className="flex items-center gap-2 mb-3">
                           {renderStars(p.rating)}
