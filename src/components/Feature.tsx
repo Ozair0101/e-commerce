@@ -20,6 +20,8 @@ const Feature: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(0);
+  const itemsPerPage = 4;
 
   const backendOrigin = useMemo(() => {
     try {
@@ -69,9 +71,9 @@ const Feature: React.FC = () => {
 
         if (!isMounted) return;
 
-        const discounted = data
-          .filter((p) => p.discount_price !== null && Number(p.discount_price) < Number(p.price))
-          .slice(0, 4);
+        const discounted = data.filter(
+          (p) => p.discount_price !== null && Number(p.discount_price) < Number(p.price),
+        );
 
         setProducts(discounted);
       } catch (err) {
@@ -95,6 +97,18 @@ const Feature: React.FC = () => {
 
   const cards = products;
 
+  const totalPages = Math.max(1, Math.ceil(cards.length / itemsPerPage));
+  const pageIndex = Math.min(currentPage, totalPages - 1);
+  const pageCards = cards.slice(pageIndex * itemsPerPage, pageIndex * itemsPerPage + itemsPerPage);
+
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => (prev > 0 ? prev - 1 : prev));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => (prev < totalPages - 1 ? prev + 1 : prev));
+  };
+
   return (
     <main className="flex-grow">
       {/* Featured Deals Section */}
@@ -114,7 +128,7 @@ const Feature: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {loading && cards.length === 0 && (
               <>
-                {Array.from({ length: 4 }).map((_, idx) => (
+                {Array.from({ length: itemsPerPage }).map((_, idx) => (
                   <div
                     key={idx}
                     className="bg-white rounded-[2rem] p-3 shadow-sm border border-gray-200 animate-pulse h-full"
@@ -137,7 +151,7 @@ const Feature: React.FC = () => {
                 No discounted products available right now.
               </div>
             )}
-            {cards.map((product) => {
+            {pageCards.map((product) => {
               const hasDiscount =
                 product.discount_price !== null && Number(product.discount_price) < Number(product.price);
               const primaryImage =
@@ -214,19 +228,39 @@ const Feature: React.FC = () => {
             })}
           </div>
           {/* Section Footer/Pagination */}
-          <div className="flex justify-center mt-12 gap-4">
-            <button className="size-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 hover:text-white transition-all">
-              <span className="material-symbols-outlined">arrow_back</span>
-            </button>
-            <div className="flex gap-2 items-center">
-              <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-              <div className="w-3 h-3 rounded-full bg-gray-200"></div>
-              <div className="w-3 h-3 rounded-full bg-gray-200"></div>
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-12 gap-4 items-center">
+              <button
+                className="size-9 md:size-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 hover:text-white transition-all disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-inherit disabled:hover:border-gray-200"
+                onClick={handlePrevPage}
+                disabled={pageIndex === 0}
+                type="button"
+              >
+                <span className="material-symbols-outlined text-base md:text-lg">arrow_back</span>
+              </button>
+              <div className="flex gap-2 items-center">
+                {Array.from({ length: totalPages }).map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setCurrentPage(idx)}
+                    className={`w-3 h-3 rounded-full transition-colors ${
+                      idx === pageIndex ? 'bg-orange-500' : 'bg-gray-200 hover:bg-gray-300'
+                    }`}
+                    aria-label={`Go to page ${idx + 1}`}
+                  />
+                ))}
+              </div>
+              <button
+                className="size-9 md:size-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 hover:text-white transition-all disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-inherit disabled:hover:border-gray-200"
+                onClick={handleNextPage}
+                disabled={pageIndex >= totalPages - 1}
+                type="button"
+              >
+                <span className="material-symbols-outlined text-base md:text-lg">arrow_forward</span>
+              </button>
             </div>
-            <button className="size-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 hover:text-white transition-all">
-              <span className="material-symbols-outlined">arrow_forward</span>
-            </button>
-          </div>
+          )}
         </div>
       </section>
     </main>
