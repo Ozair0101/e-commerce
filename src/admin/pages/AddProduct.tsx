@@ -64,9 +64,31 @@ const AddProductPage: React.FC = () => {
 
   const resolveImageUrl = (url: string | undefined) => {
     if (!url) return '';
+
+    // Handle absolute URLs
     if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
+      try {
+        const parsed = new URL(url);
+        const backend = new URL(backendOrigin);
+
+        // If the image URL points to localhost with no port, but our API has a port (e.g. :8000),
+        // normalize it to use the backend origin so assets are served from the correct host:port.
+        const isLocalhost = parsed.hostname === 'localhost';
+        const hasNoPort = !parsed.port;
+        const backendHasPort = !!backend.port;
+
+        if (isLocalhost && hasNoPort && backendHasPort) {
+          return `${backendOrigin}${parsed.pathname}${parsed.search}${parsed.hash}`;
+        }
+
+        return url;
+      } catch {
+        // If URL parsing fails, just fall back to the original URL
+        return url;
+      }
     }
+
+    // Relative URL: prepend backend origin (includes correct port)
     return `${backendOrigin}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
