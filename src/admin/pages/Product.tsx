@@ -37,6 +37,23 @@ const ProductPage: React.FC = () => {
 
   const navigate = useNavigate();
 
+  const backendOrigin = (() => {
+    try {
+      const base = (api.defaults.baseURL as string) || '';
+      return base ? new URL(base).origin : window.location.origin;
+    } catch {
+      return window.location.origin;
+    }
+  })();
+
+  const resolveImageUrl = (url: string | undefined) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    return `${backendOrigin}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -209,7 +226,7 @@ const ProductPage: React.FC = () => {
                             <div className="bg-gray-200 rounded-xl w-12 h-12 sm:w-16 sm:h-16 overflow-hidden flex items-center justify-center">
                               {product.images && product.images.length > 0 ? (
                                 <img
-                                  src={product.images.find(img => img.is_primary)?.url || product.images[0].url}
+                                  src={resolveImageUrl(product.images.find(img => img.is_primary)?.url || product.images[0].url)}
                                   alt={product.name}
                                   className="w-full h-full object-cover"
                                 />

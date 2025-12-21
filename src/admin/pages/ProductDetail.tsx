@@ -32,6 +32,23 @@ const ProductDetailPage: React.FC = () => {
     type: 'success' | 'error' | 'info' | 'warning';
   } | null>(null);
 
+  const backendOrigin = (() => {
+    try {
+      const base = (api.defaults.baseURL as string) || '';
+      return base ? new URL(base).origin : window.location.origin;
+    } catch {
+      return window.location.origin;
+    }
+  })();
+
+  const resolveImageUrl = (url: string | undefined) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    return `${backendOrigin}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -167,7 +184,7 @@ const ProductDetailPage: React.FC = () => {
                 <div className="aspect-video w-full rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden">
                   {product.images && product.images.length > 0 ? (
                     <img
-                      src={product.images.find((img) => img.is_primary)?.url || product.images[0].url}
+                      src={resolveImageUrl(product.images.find((img) => img.is_primary)?.url || product.images[0].url)}
                       alt={product.name}
                       className="w-full h-full object-cover"
                     />
@@ -188,7 +205,7 @@ const ProductDetailPage: React.FC = () => {
                         }`}
                       >
                         <img
-                          src={img.url}
+                          src={resolveImageUrl(img.url)}
                           alt={product.name}
                           className="w-full h-full object-cover"
                         />
