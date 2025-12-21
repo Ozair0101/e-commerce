@@ -33,7 +33,7 @@ const ProductPage: React.FC = () => {
   } | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('name');
+  const [sortBy, setSortBy] = useState('latest');
 
   const navigate = useNavigate();
 
@@ -101,6 +101,7 @@ const ProductPage: React.FC = () => {
   });
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (sortBy === 'latest') return b.product_id - a.product_id;
     if (sortBy === 'name') return a.name.localeCompare(b.name);
     if (sortBy === 'price') return Number(a.price) - Number(b.price);
     if (sortBy === 'stock') return b.stock_quantity - a.stock_quantity;
@@ -202,6 +203,7 @@ const ProductPage: React.FC = () => {
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
               >
+                <option value="latest">Sort by Latest</option>
                 <option value="name">Sort by Name</option>
                 <option value="price">Sort by Price</option>
                 <option value="stock">Sort by Stock</option>
