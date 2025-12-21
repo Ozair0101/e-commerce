@@ -45,7 +45,7 @@ function App() {
             </Route>
             
             {/* Main Site Routes */}
-            <Route path="/" element={
+            <Route path="/*" element={
               <>
                 <Header />
                 <main className="flex w-full flex-col items-center flex-1">
