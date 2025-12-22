@@ -473,11 +473,13 @@ const ProductDetailPage: React.FC = () => {
                                 <span className="text-[10px] text-gray-400">{createdLabel}</span>
                               )}
                             </div>
-                            <div className="flex items-center gap-1 text-orange-500 text-[14px]">
+                            <div className="flex items-center gap-1 text-[14px]">
                               {[1, 2, 3, 4, 5].map((star) => (
                                 <span
                                   key={star}
-                                  className="material-symbols-outlined text-[14px]"
+                                  className={`material-symbols-outlined text-[14px] ${
+                                    star <= review.rating ? 'text-orange-500' : 'text-gray-300'
+                                  }`}
                                 >
                                   {star <= review.rating ? 'star' : 'star_border'}
                                 </span>

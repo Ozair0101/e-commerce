@@ -532,9 +532,14 @@ const ProductDetail: React.FC = () => {
                           <h4 className="font-bold text-gray-900 text-sm">{review.name}</h4>
                           {createdLabel && <span className="text-xs text-gray-400">{createdLabel}</span>}
                         </div>
-                        <div className="flex text-yellow-400 text-sm mb-2">
+                        <div className="flex text-sm mb-2">
                           {[1, 2, 3, 4, 5].map((star) => (
-                            <span key={star} className="material-symbols-outlined text-[16px] fill-current">
+                            <span
+                              key={star}
+                              className={`material-symbols-outlined text-[16px] fill-current ${
+                                star <= review.rating ? 'text-yellow-400' : 'text-gray-300'
+                              }`}
+                            >
                               {star <= review.rating ? 'star' : 'star_border'}
                             </span>
                           ))}
