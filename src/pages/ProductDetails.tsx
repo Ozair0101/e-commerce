@@ -178,12 +178,8 @@ const ProductDetail: React.FC = () => {
               Home
             </a>
             <span className="mx-2 text-gray-300">/</span>
-            <a className="hover:text-primary transition-colors" href="#">
-              {product.category_id || 'Products'}
-            </a>
-            <span className="mx-2 text-gray-300">/</span>
-            <a className="hover:text-primary transition-colors" href="#">
-              Signature Collection
+            <a className="hover:text-primary transition-colors" href="#/shop">
+              Shop
             </a>
             <span className="mx-2 text-gray-300">/</span>
             <span className="text-gray-900 font-medium">{product.name}</span>
@@ -279,62 +275,7 @@ const ProductDetail: React.FC = () => {
                 </div>
               </div>
 
-              <p className="text-gray-600 leading-relaxed mb-8">
-                This product is part of our {product.category_id || 'catalog'} collection. Pricing and availability are updated
-                directly from the store backend, so what you see here reflects the latest information.
-              </p>
-
-              <div className="space-y-6 mb-8 border-t border-b border-gray-100 py-6">
-                <div>
-                  <div className="flex justify-between mb-3">
-                    <span className="text-sm font-bold text-gray-900">Select Size</span>
-                    <a className="text-xs text-primary font-medium hover:underline" href="#">
-                      Size Guide
-                    </a>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <label className="cursor-pointer relative">
-                      <input className="peer sr-only" name="size" type="radio" value="8oz" />
-                      <div className="rounded-xl border border-gray-200 p-3 text-center hover:border-primary peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all">
-                        <span className="block font-bold text-sm">8 oz</span>
-                        <span className="block text-xs text-gray-400 mt-1">~40 hrs</span>
-                      </div>
-                    </label>
-                    <label className="cursor-pointer relative">
-                      <input defaultChecked className="peer sr-only" name="size" type="radio" value="12oz" />
-                      <div className="rounded-xl border border-gray-200 p-3 text-center hover:border-primary peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all shadow-sm ring-1 ring-transparent peer-checked:ring-primary">
-                        <span className="block font-bold text-sm">12 oz</span>
-                        <span className="block text-xs text-gray-400 mt-1">~60 hrs</span>
-                      </div>
-                    </label>
-                    <label className="cursor-pointer relative">
-                      <input className="peer sr-only" name="size" type="radio" value="16oz" />
-                      <div className="rounded-xl border border-gray-200 p-3 text-center hover:border-primary peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all">
-                        <span className="block font-bold text-sm">16 oz</span>
-                        <span className="block text-xs text-gray-400 mt-1">~80 hrs</span>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                <div>
-                  <span className="text-sm font-bold text-gray-900 mb-3 block">Scent Notes</span>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="px-3 py-1 rounded-full bg-gray-100 text-xs font-medium text-gray-700">
-                      French Lavender
-                    </span>
-                    <span className="px-3 py-1 rounded-full bg-gray-100 text-xs font-medium text-gray-700">
-                      Driftwood
-                    </span>
-                    <span className="px-3 py-1 rounded-full bg-gray-100 text-xs font-medium text-gray-700">
-                      Eucalyptus
-                    </span>
-                    <span className="px-3 py-1 rounded-full bg-gray-100 text-xs font-medium text-gray-700">
-                      Sage
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <div className="mb-8 border-t border-gray-100 pt-6" />
 
               <div className="flex gap-4 mb-8">
                 <div className="flex items-center border border-gray-200 rounded-xl bg-white h-14">
