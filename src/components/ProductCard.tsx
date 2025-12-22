@@ -8,7 +8,12 @@ export interface Product {
   image: string;
 }
 
-const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
+interface ProductCardProps {
+  product: Product;
+  onAddToCart?: (product: Product) => void;
+}
+
+const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
   const full = Math.floor(product.rating);
   const half = product.rating - full >= 0.5;
   const empty = 5 - full - (half ? 1 : 0);
@@ -31,7 +36,11 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
           ))}
         </div>
         <p className="mt-1 text-right text-lg font-semibold text-gray-800">{product.price}</p>
-        <button className="mt-2 flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-orange-500 text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-orange-600">
+        <button
+          type="button"
+          onClick={() => onAddToCart?.(product)}
+          className="mt-2 flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-orange-500 text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-orange-600"
+        >
           <span className="truncate">Add to Cart</span>
         </button>
       </div>
