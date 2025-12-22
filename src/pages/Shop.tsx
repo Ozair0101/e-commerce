@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import { useAuth } from '../contexts/AuthContext';
+import { useCart } from '../contexts/CartContext';
 
 interface ProductImage {
   id: number;
@@ -32,6 +34,10 @@ interface ShopProduct {
 type SortOption = 'featured';
 
 const Shop: React.FC = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { setCartFromApiPayload } = useCart();
+
   const [products, setProducts] = useState<ShopProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +92,24 @@ const Shop: React.FC = () => {
       return p.discountPrice;
     }
     return p.price;
+  };
+
+  const handleAddToCart = async (productId: number) => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const response = await api.post('/cart/items', {
+        user_id: user.id,
+        product_id: productId,
+        quantity: 1,
+      });
+      setCartFromApiPayload(response.data);
+    } catch (err) {
+      console.error('Error adding item to cart:', err);
+    }
   };
 
   useEffect(() => {
@@ -397,7 +421,11 @@ const Shop: React.FC = () => {
                             </span>
                           )}
                         </div>
-                        <button className="w-full h-12 rounded-xl bg-gray-800 text-white font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2 group/btn">
+                        <button
+                          type="button"
+                          onClick={() => handleAddToCart(p.id)}
+                          className="w-full h-12 rounded-xl bg-gray-800 text-white font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2 group/btn"
+                        >
                           <span>Add to Cart</span>
                           <span className="material-symbols-outlined text-[18px] group-hover/btn:translate-x-1 transition-transform">
                             shopping_bag
