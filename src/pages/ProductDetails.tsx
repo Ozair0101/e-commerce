@@ -1,379 +1,458 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import api from '../utils/api'
-
-interface ProductImage {
-  id: number
-  url: string
-  is_primary: boolean
-}
-
-interface ApiProduct {
-  product_id: number
-  name: string
-  price: number
-  discount_price: number | null
-  stock_quantity: number
-  category_id: string
-  images?: ProductImage[]
-}
+import React from 'react'
 
 const ProductDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>()
-
-  const [product, setProduct] = useState<ApiProduct | null>(null)
-  const [loading, setLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
-  const [activeImage, setActiveImage] = useState<ProductImage | null>(null)
-
-  const backendOrigin = useMemo(() => {
-    try {
-      const base = (api.defaults.baseURL as string) || ''
-      return base ? new URL(base).origin : window.location.origin
-    } catch {
-      return window.location.origin
-    }
-  }, [])
-
-  const resolveImageUrl = (url: string | undefined) => {
-    if (!url) return ''
-
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      try {
-        const parsed = new URL(url)
-        const backend = new URL(backendOrigin)
-
-        const isLocalhost = parsed.hostname === 'localhost'
-        const hasNoPort = !parsed.port
-        const backendHasPort = !!backend.port
-
-        if (isLocalhost && hasNoPort && backendHasPort) {
-          return `${backendOrigin}${parsed.pathname}${parsed.search}${parsed.hash}`
-        }
-
-        return url
-      } catch {
-        return url
-      }
-    }
-
-    return `${backendOrigin}${url.startsWith('/') ? '' : '/'}${url}`
-  }
-
-  const getFinalPrice = (p: ApiProduct) => {
-    if (p.discount_price !== null && Number(p.discount_price) < Number(p.price)) {
-      return Number(p.discount_price)
-    }
-    return Number(p.price)
-  }
-
-  useEffect(() => {
-    if (!id) {
-      setError('Invalid product ID')
-      setLoading(false)
-      return
-    }
-
-    let isMounted = true
-
-    const fetchProduct = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-
-        const response = await api.get(`/products/${id}`)
-        const data: ApiProduct = response.data.data || response.data
-
-        if (!isMounted) return
-
-        setProduct(data)
-
-        const primaryImage =
-          data.images && data.images.length > 0
-            ? data.images.find((img) => img.is_primary) || data.images[0]
-            : null
-        setActiveImage(primaryImage)
-      } catch (err: any) {
-        console.error('Error fetching product details:', err)
-        let message = 'Failed to load product details.'
-        if (err.response?.data?.message) {
-          message = err.response.data.message
-        }
-        if (isMounted) {
-          setError(message)
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
-    }
-
-    fetchProduct()
-
-    return () => {
-      isMounted = false
-    }
-  }, [id])
-
-  const rating = useMemo(() => {
-    if (!product) return 4.5
-    const base = 3.5
-    const step = (product.product_id % 5) * 0.3
-    return Math.min(5, base + step)
-  }, [product])
-
-  const renderStars = (value: number) => {
-    const stars = []
-    for (let i = 1; i <= 5; i += 1) {
-      const diff = value - i
-      let icon = 'star_border'
-      if (diff >= 0) icon = 'star'
-      else if (diff > -1) icon = 'star_half'
-      stars.push(
-        <span
-          key={i}
-          className="material-symbols-outlined !text-base text-orange-500"
-          style={icon === 'star_border' ? { fontVariationSettings: '"FILL" 0' } : undefined}
-        >
-          {icon}
-        </span>,
-      )
-    }
-    return <div className="flex gap-0.5 text-orange-500">{stars}</div>
-  }
-
-  const renderBody = () => {
-    if (loading) {
-      return (
-        <div className="flex flex-1 items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-orange-500" />
-        </div>
-      )
-    }
-
-    if (error || !product) {
-      return (
-        <div className="flex flex-1 items-center justify-center py-20">
-          <p className="text-sm text-gray-500">{error || 'Product not found.'}</p>
-        </div>
-      )
-    }
-
-    const finalPrice = getFinalPrice(product)
-    const hasDiscount = product.discount_price !== null && finalPrice < Number(product.price)
-    const savings = hasDiscount ? Number(product.price) - finalPrice : 0
-    const percent = hasDiscount && product.price > 0 ? Math.round((savings / Number(product.price)) * 100) : 0
-
-    const images = product.images || []
-
-    return (
-      <main className="w-full flex-1 flex justify-center bg-white py-6">
-        <div className="flex flex-col w-full max-w-screen-xl mx-auto px-4 sm:px-6 md:px-10">
-
-          {/* Breadcrumbs */}
-          <div className="flex flex-wrap gap-2 py-4">
-            <Link className="text-gray-500 hover:text-orange-500 text-sm font-medium leading-normal" to="/">
-              Home
-            </Link>
-            <span className="text-gray-500 text-sm font-medium leading-normal">/</span>
-            <span className="text-gray-800 text-sm font-medium leading-normal">Shop</span>
-            <span className="text-gray-500 text-sm font-medium leading-normal">/</span>
-            <span className="text-gray-800 text-sm font-medium leading-normal line-clamp-1 max-w-xs sm:max-w-sm md:max-w-md">
-              {product.name}
-            </span>
+  return (
+    <div className="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white min-h-screen flex flex-col">
+      <header className="bg-white dark:bg-[#1a2c22] border-b border-gray-100 dark:border-gray-800 sticky top-0 z-50">
+        <div className="max-w-[1280px] mx-auto px-4 md:px-8 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-10">
+            <a className="flex items-center gap-3" href="#">
+              <div className="size-8 text-primary">
+                <svg fill="currentColor" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    clipRule="evenodd"
+                    d="M39.475 21.6262C40.358 21.4363 40.6863 21.5589 40.7581 21.5934C40.7876 21.655 40.8547 21.857 40.8082 22.3336C40.7408 23.0255 40.4502 24.0046 39.8572 25.2301C38.6799 27.6631 36.5085 30.6631 33.5858 33.5858C30.6631 36.5085 27.6632 38.6799 25.2301 39.8572C24.0046 40.4502 23.0255 40.7407 22.3336 40.8082C21.8571 40.8547 21.6551 40.7875 21.5934 40.7581C21.5589 40.6863 21.4363 40.358 21.6262 39.475C21.8562 38.4054 22.4689 36.9657 23.5038 35.2817C24.7575 33.2417 26.5497 30.9744 28.7621 28.762C30.9744 26.5497 33.2417 24.7574 35.2817 23.5037C36.9657 22.4689 38.4054 21.8562 39.475 21.6262ZM4.41189 29.2403L18.7597 43.5881C19.8813 44.7097 21.4027 44.9179 22.7217 44.7893C24.0585 44.659 25.5148 44.1631 26.9723 43.4579C29.9052 42.0387 33.2618 39.5667 36.4142 36.4142C39.5667 33.2618 42.0387 29.9052 43.4579 26.9723C44.1631 25.5148 44.659 24.0585 44.7893 22.7217C44.9179 21.4027 44.7097 19.8813 43.5881 18.7597L29.2403 4.41187C27.8527 3.02428 25.8765 3.02573 24.2861 3.36776C22.6081 3.72863 20.7334 4.58419 18.8396 5.74801C16.4978 7.18716 13.9881 9.18353 11.5858 11.5858C9.18354 13.988 7.18717 16.4978 5.74802 18.8396C4.58421 20.7334 3.72865 22.6081 3.36778 24.2861C3.02574 25.8765 3.02429 27.8527 4.41189 29.2403Z"
+                    fill="currentColor"
+                    fillRule="evenodd"
+                  ></path>
+                </svg>
+              </div>
+              <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Shopazon</span>
+            </a>
+            <nav className="hidden md:flex items-center gap-8">
+              <a className="text-sm font-medium hover:text-primary transition-colors text-primary" href="#">
+                Shop Candles
+              </a>
+              <a className="text-sm font-medium hover:text-primary transition-colors" href="#">
+                Featured Deals
+              </a>
+              <a className="text-sm font-medium hover:text-primary transition-colors" href="#">
+                Our Story
+              </a>
+              <a className="text-sm font-medium hover:text-primary transition-colors" href="#">
+                Contact
+              </a>
+            </nav>
           </div>
+          <div className="flex items-center gap-4">
+            <div className="hidden lg:flex items-center bg-gray-100 dark:bg-gray-800 rounded-full px-4 h-10 w-64 focus-within:ring-2 focus-within:ring-primary/50 transition-all">
+              <span className="material-symbols-outlined text-gray-500 text-[20px]">search</span>
+              <input
+                className="bg-transparent border-none text-sm w-full focus:ring-0 placeholder:text-gray-400 dark:text-white"
+                placeholder="Search..."
+                type="text"
+              />
+            </div>
+            <button className="size-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-primary/20 hover:text-primary transition-colors">
+              <span className="material-symbols-outlined text-[20px]">shopping_cart</span>
+            </button>
+            <button className="size-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-primary/20 hover:text-primary transition-colors">
+              <span className="material-symbols-outlined text-[20px]">account_circle</span>
+            </button>
+          </div>
+        </div>
+      </header>
 
-          <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
-            {/* Left: Images */}
-            <div className="lg:col-span-6 flex flex-col md:flex-row gap-4">
-              <div className="flex md:flex-col gap-2 order-2 md:order-1 overflow-x-auto pb-2 md:pb-0">
-                {images.length === 0 && (
-                  <div className="w-16 h-16 flex items-center justify-center rounded-lg bg-gray-100 text-gray-300">
-                    <span className="material-symbols-outlined text-2xl">image</span>
-                  </div>
-                )}
-                {images.map((img) => {
-                  const url = resolveImageUrl(img.url)
-                  const isActive = activeImage ? activeImage.id === img.id : false
-                  return (
-                    <button
-                      key={img.id}
-                      type="button"
-                      onClick={() => setActiveImage(img)}
-                      className={`w-16 h-16 flex-shrink-0 rounded-lg border-2 overflow-hidden ${
-                        isActive ? 'border-orange-500' : 'border-transparent hover:border-orange-500'
-                      }`}
-                    >
-                      {url ? (
-                        <img
-                          src={url}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300">
-                          <span className="material-symbols-outlined text-2xl">image</span>
-                        </div>
-                      )}
-                    </button>
-                  )
-                })}
+      <main className="flex-grow py-8 md:py-12">
+        <div className="max-w-[1280px] mx-auto px-4 md:px-8">
+          <nav className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-8 overflow-x-auto whitespace-nowrap">
+            <a className="hover:text-primary transition-colors" href="#">
+              Home
+            </a>
+            <span className="mx-2 text-gray-300">/</span>
+            <a className="hover:text-primary transition-colors" href="#">
+              Shop Candles
+            </a>
+            <span className="mx-2 text-gray-300">/</span>
+            <a className="hover:text-primary transition-colors" href="#">
+              Signature Collection
+            </a>
+            <span className="mx-2 text-gray-300">/</span>
+            <span className="text-slate-900 dark:text-white font-medium">Lavender Driftwood</span>
+          </nav>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 xl:gap-20">
+            <div className="space-y-4">
+              <div className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-[2rem] overflow-hidden relative group">
+                <div className="absolute top-4 left-4 z-10">
+                  <span className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">-28% OFF</span>
+                  <span className="bg-white/90 backdrop-blur text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm ml-2">
+                    Bestseller
+                  </span>
+                </div>
+                <img
+                  alt="Lavender Driftwood Candle Large"
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhZz0gj8arLag2ceEFB9yyWz9WNk3oSGEWmE6v7ElpCZQ-ojwDkoPDyw8qtI-tvg1yxdXhRWkvEtWUAbmWWhgSONjX0mrtaXEjTDZtWTNBZ25u7ykv06EwhjoGEh82Joqck2Y1GP1Xb9Y1PvdQ3py9up7Vkcy5vYNwvRRdIjHKPS_ND1I7L7GM9woxPMOfMBWlU62VUVWEDzdCwbK8fnzXE-amtrE3QnwA2cf-sDWF9VUGN2emCavB2vsDn5aDtPzkFUGLuzGCv7kp"
+                />
+                <button className="absolute bottom-4 right-4 size-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-slate-900 hover:bg-primary transition-colors">
+                  <span className="material-symbols-outlined text-[20px]">zoom_in</span>
+                </button>
               </div>
 
-              <div className="w-full flex-1 order-1 md:order-2">
-                <div
-                  className="w-full bg-center bg-no-repeat bg-cover flex flex-col justify-end overflow-hidden rounded-xl aspect-square"
-                  data-alt={product.name}
-                  style={{
-                    backgroundImage: activeImage
-                      ? `url(${resolveImageUrl(activeImage.url)})`
-                      : images[0]
-                        ? `url(${resolveImageUrl(images[0].url)})`
-                        : 'none',
-                  }}
-                >
-                  {!activeImage && images.length === 0 && (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-300">
-                      <span className="material-symbols-outlined text-5xl">image</span>
-                    </div>
-                  )}
-                </div>
+              <div className="grid grid-cols-4 gap-4">
+                <button className="aspect-square rounded-2xl overflow-hidden border-2 border-primary ring-2 ring-primary/20 transition-all">
+                  <img
+                    alt="Front view"
+                    className="w-full h-full object-cover"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhZz0gj8arLag2ceEFB9yyWz9WNk3oSGEWmE6v7ElpCZQ-ojwDkoPDyw8qtI-tvg1yxdXhRWkvEtWUAbmWWhgSONjX0mrtaXEjTDZtWTNBZ25u7ykv06EwhjoGEh82Joqck2Y1GP1Xb9Y1PvdQ3py9up7Vkcy5vYNwvRRdIjHKPS_ND1I7L7GM9woxPMOfMBWlU62VUVWEDzdCwbK8fnzXE-amtrE3QnwA2cf-sDWF9VUGN2emCavB2vsDn5aDtPzkFUGLuzGCv7kp"
+                  />
+                </button>
+                <button className="aspect-square rounded-2xl overflow-hidden border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 transition-all opacity-70 hover:opacity-100">
+                  <img
+                    alt="Side view"
+                    className="w-full h-full object-cover"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXDjhUB2bQtcSMNXBYoGVf3mIsiO-myCJL2_nBIWz5QNPyuCq38IqjcW_h-s0r5X1wN6nIscwEsNN7WZsTZ-pyYOx88iGDas85wwERdFT5vziz5FnLQ8iRnnV9ePsdSMOfiWyeOBAC_Di5Zfx8VnqU03C9WCBBNZ3XcN540dO9_t7kWqWhzKBjA8_3c1JjtSosOTEIYN22YKAjiHvJM7gmKpFrG0vrGQccN9XETydldkLAb7Srx-qs-flCwGP2K5X9k3ZpjrYhd2G2"
+                  />
+                </button>
+                <button className="aspect-square rounded-2xl overflow-hidden border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 transition-all opacity-70 hover:opacity-100">
+                  <img
+                    alt="Texture detail"
+                    className="w-full h-full object-cover"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuC32oK4rUnAHFclLdwSQdth-uyUFr-q9jxlVs9uHZZuEetNfzTaSPoxBfd5Abjk61lihGmUKFsRIGWm3tmvBdYUouNchzeBlwUzI2nV0Sj_AqKit5vi1z81labvFpZ9Qh4wn02T6x_9Bwdk3qTs5s0H7GLHMvgmjOtrC8T2Ur0_wEAmVVPkPM9KbOrQquceZ1VyYIpBNViPNrgcwULN-2--_OkZHeFiWCktozGnv_WXFN1cWv-R-twUfnW8snKu1Bb6bQDJ-q1WbCE3"
+                  />
+                </button>
+                <button className="aspect-square rounded-2xl overflow-hidden border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 transition-all opacity-70 hover:opacity-100 bg-gray-50 flex items-center justify-center text-gray-400">
+                  <span className="material-symbols-outlined">play_circle</span>
+                </button>
               </div>
             </div>
 
-            {/* Right: Details */}
-            <div className="lg:col-span-4">
-              <div className="bg-white rounded-[2rem] p-5 md:p-6 shadow-sm border border-gray-200 flex flex-col gap-4">
+            <div className="flex flex-col">
+              <div className="mb-6">
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mb-4 leading-tight">
+                  Lavender Driftwood
+                </h1>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-yellow-400 fill-current text-[20px]">star</span>
+                    <span className="material-symbols-outlined text-yellow-400 fill-current text-[20px]">star</span>
+                    <span className="material-symbols-outlined text-yellow-400 fill-current text-[20px]">star</span>
+                    <span className="material-symbols-outlined text-yellow-400 fill-current text-[20px]">star</span>
+                    <span className="material-symbols-outlined text-yellow-400/50 text-[20px]">star_half</span>
+                  </div>
+                  <a
+                    className="text-sm font-medium text-slate-500 hover:text-primary underline decoration-slate-300 underline-offset-4"
+                    href="#reviews"
+                  >
+                    4.8 (128 Reviews)
+                  </a>
+                </div>
+                <div className="flex items-end gap-3">
+                  <span className="text-3xl font-bold text-slate-900 dark:text-white">$18.00</span>
+                  <span className="text-xl text-gray-400 line-through decoration-red-400 mb-1">$25.00</span>
+                </div>
+              </div>
+
+              <p className="text-slate-600 dark:text-gray-300 leading-relaxed mb-8">
+                Immerse yourself in the serene blend of fresh lavender, coastal woods, and a hint of eucalyptus. Our Lavender
+                Driftwood candle is hand-poured with 100% natural soy wax for a clean, long-lasting burn that transforms your
+                space into a tranquil retreat.
+              </p>
+
+              <div className="space-y-6 mb-8 border-t border-b border-gray-100 dark:border-gray-800 py-6">
                 <div>
-                  <h1 className="text-gray-900 tracking-tight text-2xl font-bold leading-tight">
-                    {product.name}
-                  </h1>
-                  <p className="text-orange-500 text-xs sm:text-sm cursor-default mt-1">
-                    Product ID: {product.product_id}
-                  </p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="font-bold text-sm sm:text-base">{rating.toFixed(1)}</span>
-                    {renderStars(rating)}
-                    <span className="text-gray-500 text-xs sm:text-sm cursor-default">Ratings</span>
+                  <div className="flex justify-between mb-3">
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">Select Size</span>
+                    <a className="text-xs text-primary font-medium hover:underline" href="#">
+                      Size Guide
+                    </a>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <label className="cursor-pointer relative">
+                      <input className="peer sr-only" name="size" type="radio" value="8oz" />
+                      <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3 text-center hover:border-primary peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all">
+                        <span className="block font-bold text-sm">8 oz</span>
+                        <span className="block text-xs text-gray-400 mt-1">~40 hrs</span>
+                      </div>
+                    </label>
+                    <label className="cursor-pointer relative">
+                      <input defaultChecked className="peer sr-only" name="size" type="radio" value="12oz" />
+                      <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3 text-center hover:border-primary peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all shadow-sm ring-1 ring-transparent peer-checked:ring-primary">
+                        <span className="block font-bold text-sm">12 oz</span>
+                        <span className="block text-xs text-gray-400 mt-1">~60 hrs</span>
+                      </div>
+                    </label>
+                    <label className="cursor-pointer relative">
+                      <input className="peer sr-only" name="size" type="radio" value="16oz" />
+                      <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3 text-center hover:border-primary peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all">
+                        <span className="block font-bold text-sm">16 oz</span>
+                        <span className="block text-xs text-gray-400 mt-1">~80 hrs</span>
+                      </div>
+                    </label>
                   </div>
                 </div>
 
-                <div className="py-3 border-y border-gray-200">
-                  <div className="flex items-baseline gap-2">
-                    {hasDiscount && percent > 0 && (
-                      <span className="text-xs sm:text-sm -translate-y-1 text-red-600 bg-red-50 rounded-full px-2 py-0.5 font-semibold">
-                        -{percent}%
-                      </span>
-                    )}
-                    <span className="text-3xl font-semibold text-gray-900">
-                      ${finalPrice.toFixed(2)}
+                <div>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white mb-3 block">Scent Notes</span>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-medium text-slate-700 dark:text-gray-300">
+                      French Lavender
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-medium text-slate-700 dark:text-gray-300">
+                      Driftwood
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-medium text-slate-700 dark:text-gray-300">
+                      Eucalyptus
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-medium text-slate-700 dark:text-gray-300">
+                      Sage
                     </span>
                   </div>
-                  {hasDiscount && (
-                    <>
-                      <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                        List Price:{' '}
-                        <span className="line-through">${Number(product.price).toFixed(2)}</span>
-                      </p>
-                      <p className="text-xs sm:text-sm mt-1 text-green-700">
-                        Save{' '}
-                        <span className="font-bold">
-                          ${savings.toFixed(2)}
-                        </span>
-                        {percent > 0 ? ` (${percent}% )` : ''}
-                      </p>
-                    </>
-                  )}
                 </div>
+              </div>
 
-                <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 flex flex-col gap-3">
-                  <div>
-                    <p
-                      className={`text-sm sm:text-base font-bold ${
-                        product.stock_quantity > 0
-                          ? 'text-green-600'
-                          : 'text-red-600'
-                      }`}
-                    >
-                      {product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}
-                    </p>
-                    <p className="text-xs sm:text-sm mt-1">
-                      Ships from: <span className="font-semibold">PrimeCommerce.com</span>
-                    </p>
-                    <p className="text-xs sm:text-sm">
-                      Sold by: <span className="font-semibold">Your Store</span>
-                    </p>
-                    <p className="text-xs sm:text-sm mt-1">Available quantity: {product.stock_quantity}</p>
-                  </div>
+              <div className="flex gap-4 mb-8">
+                <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-[#1a2c22] h-14">
+                  <button className="px-4 h-full text-gray-500 hover:text-primary transition-colors">
+                    <span className="material-symbols-outlined text-[18px]">remove</span>
+                  </button>
+                  <input
+                    className="w-12 text-center bg-transparent border-none p-0 text-slate-900 dark:text-white font-bold focus:ring-0"
+                    type="text"
+                    value="1"
+                    readOnly
+                  />
+                  <button className="px-4 h-full text-gray-500 hover:text-primary transition-colors">
+                    <span className="material-symbols-outlined text-[18px]">add</span>
+                  </button>
+                </div>
+                <button className="flex-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 h-14 rounded-xl font-bold hover:bg-primary hover:text-slate-900 dark:hover:bg-primary transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/10">
+                  <span className="material-symbols-outlined">shopping_bag</span>
+                  <span>Add to Cart</span>
+                </button>
+                <button className="size-14 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a2c22] flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-200 dark:hover:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors">
+                  <span className="material-symbols-outlined text-[24px]">favorite</span>
+                </button>
+              </div>
 
-                  <div className="mt-1 flex items-center gap-2">
-                    <label className="text-xs sm:text-sm font-medium" htmlFor="quantity">
-                      Qty:
-                    </label>
-                    <select
-                      id="quantity"
-                      className="form-select w-20 h-8 text-xs sm:text-sm rounded-lg bg-white border border-gray-300 focus:ring-orange-500 focus:border-orange-500"
-                      defaultValue={1}
-                    >
-                      {[1, 2, 3, 4, 5].map((q) => (
-                        <option key={q} value={q}>
-                          {q}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="flex flex-col gap-2 mt-2">
-                    <button
-                      type="button"
-                      className="w-full h-11 rounded-full bg-gray-800 text-white text-sm sm:text-base font-semibold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2 group/btn shadow-sm"
-                    >
-                      <span className="truncate">Add to Cart</span>
-                      <span className="material-symbols-outlined text-[18px] group-hover/btn:translate-x-1 transition-transform">
-                        shopping_bag
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      className="w-full h-11 rounded-full bg-white text-gray-900 border border-gray-300 text-sm sm:text-base font-semibold hover:border-orange-500 hover:text-orange-500 transition-all flex items-center justify-center gap-2"
-                    >
-                      <span className="truncate">Buy Now</span>
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1 text-xs sm:text-sm text-gray-500">
-                    <span className="material-symbols-outlined !text-base">lock</span>
-                    <span>Secure transaction</span>
-                  </div>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-gray-400">
+                  <span className="material-symbols-outlined text-green-500">check_circle</span>
+                  <span>In stock and ready to ship</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-gray-400">
+                  <span className="material-symbols-outlined text-blue-500">local_shipping</span>
+                  <span>Free shipping on orders over $50</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-gray-400">
+                  <span className="material-symbols-outlined text-primary">eco</span>
+                  <span>Sustainable, recyclable packaging</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Simplified product information & reviews placeholder, keeping style */}
-          <div className="my-10 border-t border-gray-200 pt-8">
-            <h2 className="text-gray-900 tracking-light text-xl font-bold">Product information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mt-4 text-sm">
-              <div>
-                <span className="font-bold w-40 inline-block text-gray-700">Category</span>
-                <span className="text-gray-700">{product.category_id}</span>
+          <div className="mt-20" id="reviews">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">Comments &amp; Ratings</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+              <div className="lg:col-span-1">
+                <div className="bg-white dark:bg-[#1a2c22] p-6 rounded-2xl border border-gray-100 dark:border-gray-800 sticky top-24">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Write a Review</h3>
+                  <form className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Rating</label>
+                      <div className="flex gap-1">
+                        <button className="group" type="button">
+                          <span className="material-symbols-outlined text-yellow-400 text-2xl group-hover:scale-110 transition-transform">
+                            star
+                          </span>
+                        </button>
+                        <button className="group" type="button">
+                          <span className="material-symbols-outlined text-yellow-400 text-2xl group-hover:scale-110 transition-transform">
+                            star
+                          </span>
+                        </button>
+                        <button className="group" type="button">
+                          <span className="material-symbols-outlined text-yellow-400 text-2xl group-hover:scale-110 transition-transform">
+                            star
+                          </span>
+                        </button>
+                        <button className="group" type="button">
+                          <span className="material-symbols-outlined text-yellow-400 text-2xl group-hover:scale-110 transition-transform">
+                            star
+                          </span>
+                        </button>
+                        <button className="group" type="button">
+                          <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-2xl group-hover:text-yellow-400 transition-colors">
+                            star
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Name</label>
+                      <input
+                        className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-black/20 text-slate-900 dark:text-white text-sm focus:ring-primary focus:border-primary"
+                        placeholder="Your Name"
+                        type="text"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Comment</label>
+                      <textarea
+                        className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-black/20 text-slate-900 dark:text-white text-sm focus:ring-primary focus:border-primary"
+                        placeholder="How was your experience?"
+                        rows={4}
+                      ></textarea>
+                    </div>
+
+                    <button
+                      className="w-full bg-primary text-slate-900 font-bold py-3 px-6 rounded-xl hover:bg-opacity-90 transition-all shadow-lg shadow-primary/20"
+                      type="button"
+                    >
+                      Submit Review
+                    </button>
+                  </form>
+                </div>
               </div>
-              <div>
-                <span className="font-bold w-40 inline-block text-gray-700">Price</span>
-                <span className="text-gray-700">${finalPrice.toFixed(2)}</span>
+
+              <div className="lg:col-span-2 space-y-6">
+                <div className="flex items-center justify-between pb-6 border-b border-gray-100 dark:border-gray-800">
+                  <div>
+                    <span className="text-3xl font-bold text-slate-900 dark:text-white">4.8</span>
+                    <div className="flex text-yellow-400 text-sm mt-1">
+                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
+                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
+                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
+                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
+                      <span className="material-symbols-outlined text-[16px] fill-current text-yellow-400/50">star_half</span>
+                    </div>
+                    <span className="text-sm text-gray-500 mt-1 block">Based on 128 reviews</span>
+                  </div>
+                  <select className="rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a2c22] text-sm text-slate-700 dark:text-gray-300 focus:ring-primary focus:border-primary">
+                    <option>Most Recent</option>
+                    <option>Highest Rated</option>
+                    <option>Lowest Rated</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 pt-1">
+                    <div className="size-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-sm">
+                      JD
+                    </div>
+                  </div>
+                  <div className="flex-grow">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
+                      <h4 className="font-bold text-slate-900 dark:text-white text-sm">Jane Doe</h4>
+                      <span className="text-xs text-gray-400">2 days ago</span>
+                    </div>
+                    <div className="flex text-yellow-400 text-sm mb-2">
+                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
+                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
+                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
+                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
+                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
+                    </div>
+                    <p className="text-slate-600 dark:text-gray-300 text-sm leading-relaxed">
+                      Absolutely love this scent! It's not too overpowering but fills the room nicely. The packaging was also
+                      super secure. Will definitely buy again.
+                    </p>
+                  </div>
+                </div>
+
+                <hr className="border-gray-100 dark:border-gray-800" />
+
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 pt-1">
+                    <div className="size-10 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm">
+                      MS
+                    </div>
+                  </div>
+                  <div className="flex-grow">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
+                      <h4 className="font-bold text-slate-900 dark:text-white text-sm">Mike Smith</h4>
+                      <span className="text-xs text-gray-400">1 week ago</span>
+                    </div>
+                    <div className="flex text-yellow-400 text-sm mb-2">
+                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
+                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
+                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
+                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
+                      <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-[16px] fill-current">
+                        star
+                      </span>
+                    </div>
+                    <p className="text-slate-600 dark:text-gray-300 text-sm leading-relaxed">
+                      Great candle for the price. The burn is even, which is rare for some soy candles I've tried. The scent is
+                      very relaxing, perfect for bath time.
+                    </p>
+                  </div>
+                </div>
+
+                <hr className="border-gray-100 dark:border-gray-800" />
+
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 pt-1">
+                    <div className="size-10 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-sm">
+                      EM
+                    </div>
+                  </div>
+                  <div className="flex-grow">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
+                      <h4 className="font-bold text-slate-900 dark:text-white text-sm">Emily Martinez</h4>
+                      <span className="text-xs text-gray-400">3 weeks ago</span>
+                    </div>
+                    <div className="flex text-yellow-400 text-sm mb-2">
+                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
+                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
+                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
+                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
+                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
+                    </div>
+                    <p className="text-slate-600 dark:text-gray-300 text-sm leading-relaxed">
+                      I was skeptical about ordering candles online without smelling them first, but this one exceeded my
+                      expectations. It smells like a luxury hotel lobby. The throw is amazing too, I can smell it in the
+                      hallway.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-4 text-center">
+                  <button className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-xl font-medium text-slate-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm">
+                    Load More Reviews
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </main>
-    )
-  }
 
-  return (
-    <div className="bg-white text-gray-800 min-h-screen">
-      <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
-        <div className="flex h-full grow flex-col">{renderBody()}</div>
-      </div>
+      <footer className="bg-white dark:bg-[#1a2c22] border-t border-gray-100 dark:border-gray-800 py-12">
+        <div className="max-w-[1280px] mx-auto px-4 md:px-8 flex flex-col items-center text-center gap-8">
+          <a className="flex items-center gap-3" href="#">
+            <div className="size-6 text-primary">
+              <svg fill="currentColor" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  clipRule="evenodd"
+                  d="M39.475 21.6262C40.358 21.4363 40.6863 21.5589 40.7581 21.5934C40.7876 21.655 40.8547 21.857 40.8082 22.3336C40.7408 23.0255 40.4502 24.0046 39.8572 25.2301C38.6799 27.6631 36.5085 30.6631 33.5858 33.5858C30.6631 36.5085 27.6632 38.6799 25.2301 39.8572C24.0046 40.4502 23.0255 40.7407 22.3336 40.8082C21.8571 40.8547 21.6551 40.7875 21.5934 40.7581C21.5589 40.6863 21.4363 40.358 21.6262 39.475C21.8562 38.4054 22.4689 36.9657 23.5038 35.2817C24.7575 33.2417 26.5497 30.9744 28.7621 28.762C30.9744 26.5497 33.2417 24.7574 35.2817 23.5037C36.9657 22.4689 38.4054 21.8562 39.475 21.6262ZM4.41189 29.2403L18.7597 43.5881C19.8813 44.7097 21.4027 44.9179 22.7217 44.7893C24.0585 44.659 25.5148 44.1631 26.9723 43.4579C29.9052 42.0387 33.2618 39.5667 36.4142 36.4142C39.5667 33.2618 42.0387 29.9052 43.4579 26.9723C44.1631 25.5148 44.659 24.0585 44.7893 22.7217C44.9179 21.4027 44.7097 19.8813 43.5881 18.7597L29.2403 4.41187C27.8527 3.02428 25.8765 3.02573 24.2861 3.36776C22.6081 3.72863 20.7334 4.58419 18.8396 5.74801C16.4978 7.18716 13.9881 9.18353 11.5858 11.5858C9.18354 13.988 7.18717 16.4978 5.74802 18.8396C4.58421 20.7334 3.72865 22.6081 3.36778 24.2861C3.02574 25.8765 3.02429 27.8527 4.41189 29.2403Z"
+                  fill="currentColor"
+                  fillRule="evenodd"
+                ></path>
+              </svg>
+            </div>
+            <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Shopazon</span>
+          </a>
+          <div className="flex flex-wrap items-center justify-center gap-6">
+            <a className="text-gray-500 dark:text-gray-400 text-sm hover:text-primary transition-colors" href="#">
+              Privacy Policy
+            </a>
+            <a className="text-gray-500 dark:text-gray-400 text-sm hover:text-primary transition-colors" href="#">
+              Terms of Service
+            </a>
+            <a className="text-gray-500 dark:text-gray-400 text-sm hover:text-primary transition-colors" href="#">
+              Shipping Info
+            </a>
+          </div>
+          <p className="text-gray-400 dark:text-gray-500 text-sm">
+            &copy; 2024 Shopazon Candles. All rights reserved.
+          </p>
+        </div>
+      </footer>
     </div>
   )
 }
