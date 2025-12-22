@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import api from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useCart } from '../contexts/CartContext';
 
 interface CartProductImage {
   id: number;
@@ -34,6 +35,7 @@ interface CartResponse {
 const ShoppingCart: React.FC = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { setCartFromApiPayload } = useCart();
 
   const [cart, setCart] = useState<CartResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -92,8 +94,10 @@ const ShoppingCart: React.FC = () => {
         params: { user_id: user.id },
       });
 
-      const data: CartResponse = response.data.data || response.data;
+      const payload = response.data;
+      const data: CartResponse = payload.data || payload;
       setCart(data);
+      setCartFromApiPayload(payload);
     } catch (err: any) {
       console.error('Error fetching cart:', err);
       let message = 'Failed to load cart.';
@@ -129,8 +133,10 @@ const ShoppingCart: React.FC = () => {
       const response = await api.put(`/cart/items/${item.cart_item_id}`, {
         quantity,
       });
-      const data: CartResponse = response.data.data || response.data;
+      const payload = response.data;
+      const data: CartResponse = payload.data || payload;
       setCart(data);
+      setCartFromApiPayload(payload);
     } catch (err) {
       console.error('Error updating cart item quantity:', err);
     } finally {
@@ -143,8 +149,10 @@ const ShoppingCart: React.FC = () => {
     try {
       setRemovingItemId(item.cart_item_id);
       const response = await api.delete(`/cart/items/${item.cart_item_id}`);
-      const data: CartResponse = response.data.data || response.data;
+      const payload = response.data;
+      const data: CartResponse = payload.data || payload;
       setCart(data);
+      setCartFromApiPayload(payload);
     } catch (err) {
       console.error('Error removing cart item:', err);
     } finally {
@@ -156,8 +164,11 @@ const ShoppingCart: React.FC = () => {
     if (!cart) return;
     try {
       setClearing(true);
-      await api.delete(`/cart/${cart.cart_id}/clear`);
-      setCart({ ...cart, items: [] });
+      const response = await api.delete(`/cart/${cart.cart_id}/clear`);
+      const payload = response.data;
+      const data: CartResponse = payload?.data || { ...cart, items: [] };
+      setCart(data);
+      setCartFromApiPayload(payload || data);
     } catch (err) {
       console.error('Error clearing cart:', err);
     } finally {
