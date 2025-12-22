@@ -28,6 +28,7 @@ const Home: React.FC = () => {
     name: string;
     price: number;
     discount_price: number | null;
+    average_rating?: number | null;
     images?: ApiProductImage[];
   }
 
@@ -87,11 +88,14 @@ const Home: React.FC = () => {
               ? p.discount_price
               : p.price;
 
+          const hasRealRating = typeof p.average_rating === 'number' && !Number.isNaN(Number(p.average_rating));
+          const rating = hasRealRating ? Number(p.average_rating) : 4.5;
+
           return {
             id: String(p.product_id),
             title: p.name,
             price: `$${Number(finalPrice).toFixed(2)}`,
-            rating: 4.5,
+            rating,
             image: resolveImageUrl(primaryImage?.url),
           };
         });

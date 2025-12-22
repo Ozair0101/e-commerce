@@ -14,6 +14,8 @@ interface ApiProduct {
   name: string;
   price: number;
   discount_price: number | null;
+  average_rating?: number | null;
+  reviews_count?: number;
   images?: ProductImage[];
 }
 
@@ -24,6 +26,7 @@ interface ShopProduct {
   discountPrice: number | null;
   image: string;
   rating: number;
+  ratingCount: number;
 }
 
 type SortOption = 'featured';
@@ -71,8 +74,8 @@ const Shop: React.FC = () => {
     return `${backendOrigin}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
-  const getRatingForProduct = (id: number) => {
-    // Simple deterministic pseudo-rating between 3.0 and 5.0
+  const getFallbackRatingForProduct = (id: number) => {
+    // Simple deterministic pseudo-rating between 3.0 and 5.0 used only when no reviews exist yet
     const base = 3;
     const step = (id % 5) * 0.5;
     return Math.min(5, base + step);
@@ -104,6 +107,11 @@ const Shop: React.FC = () => {
               ? p.images.find((img) => img.is_primary) || p.images[0]
               : undefined;
 
+          const hasRealRating = typeof p.average_rating === 'number' && !Number.isNaN(Number(p.average_rating));
+          const rating = hasRealRating
+            ? Number(p.average_rating)
+            : getFallbackRatingForProduct(p.product_id);
+
           return {
             id: p.product_id,
             name: p.name,
@@ -113,7 +121,8 @@ const Shop: React.FC = () => {
                 ? Number(p.discount_price)
                 : null,
             image: resolveImageUrl(primaryImage?.url),
-            rating: getRatingForProduct(p.product_id),
+            rating,
+            ratingCount: typeof p.reviews_count === 'number' ? p.reviews_count : 0,
           };
         });
 
@@ -362,7 +371,9 @@ const Shop: React.FC = () => {
                         </h3>
                         <div className="flex items-center gap-2 mb-3">
                           {renderStars(p.rating)}
-                          <span className="text-xs text-gray-500">{p.rating.toFixed(1)}</span>
+                          <span className="text-xs text-gray-500">
+                            {p.rating.toFixed(1)}{p.ratingCount ? ` (${p.ratingCount})` : ''}
+                          </span>
                         </div>
                         <div className="flex items-end justify-between mb-4">
                           <div className="flex flex-col items-start">
