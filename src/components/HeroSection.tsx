@@ -3,6 +3,7 @@ import heroImage from '../assets/6.jpg';
 import customer1 from '../assets/2.jpg';
 import customer2 from '../assets/3.jpg';
 import customer3 from '../assets/4.jpg';
+import { Link } from 'react-router-dom';
 
 const HeroSection: React.FC = () => {
     return (
@@ -17,24 +18,27 @@ const HeroSection: React.FC = () => {
                                 Collection</span>
                             <h1
                                 className="text-gray-800 text-4xl md:text-6xl lg:text-7xl font-display font-black leading-[1.1] tracking-tight">
-                                Upgrade Your <br /><span className="text-orange-500">Daily Drive.</span>
+                                Light Up <br /><span className="text-orange-500">Your Space.</span>
                             </h1>
                             <h2
                                 className="text-gray-600 text-lg md:text-xl font-normal leading-relaxed max-w-lg mx-auto lg:mx-0">
-                                Experience the new standard in lifestyle essentials. Premium quality, unbeatable prices,
-                                and lighting-fast delivery straight to your door.
+                                    Celebrate life's special moments with candles as unique as your story perfect for baby showers, baptisms, bridal showers, and every special occasion.
                             </h2>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                            <button
-                                className="h-12 px-8 rounded-full bg-gray-800 hover:bg-orange-500 text-white text-base font-bold transition-all transform hover:scale-105">
-                                Shop New Arrivals
-                            </button>
-                            <button
-                                className="h-12 px-8 rounded-full bg-gray-100 border border-gray-300 text-gray-800 hover:bg-gray-200 text-base font-bold transition-colors flex items-center justify-center gap-2">
-                                <span>View Deals</span>
-                                <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                            </button>
+                            <Link to="/shop">
+                                <button
+                                    className="h-12 px-8 rounded-full bg-gray-800 hover:bg-orange-500 text-white text-base font-bold transition-all transform hover:scale-105">
+                                    Shop New Arrivals
+                                </button>
+                            </Link>
+                            <Link to="/shop">
+                                <button
+                                    className="h-12 px-8 rounded-full bg-gray-100 border border-gray-300 text-gray-800 hover:bg-gray-200 text-base font-bold transition-colors flex items-center justify-center gap-2">
+                                    <span>View More</span>
+                                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                                </button>
+                            </Link>
                         </div>
                         <div className="flex items-center gap-6 mt-2">
                             <div className="flex -space-x-3">
