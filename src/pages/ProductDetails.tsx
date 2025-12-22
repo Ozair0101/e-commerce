@@ -286,7 +286,7 @@ const ProductDetail: React.FC = () => {
   }
 
   return (
-    <div className="bg-white text-gray-800 min-h-screen flex flex-col">
+    <div className="bg-white text-gray-800 mt-18 min-h-screen flex flex-col">
       <main className="flex-grow py-8 md:py-12">
         <div className="max-w-[1280px] mx-auto px-4 md:px-8">
           <nav className="flex items-center text-sm text-gray-500 mb-8 overflow-x-auto whitespace-nowrap">
