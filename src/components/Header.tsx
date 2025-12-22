@@ -7,7 +7,7 @@ const Header: React.FC = () => {
   const { itemCount } = useCart();
 
   return (
-    <header className="sticky top-0 z-50 flex w-full flex-col items-center bg-white text-gray-800 border-b border-gray-200">
+    <header className="fixed top-0 left-0 z-50 flex w-full flex-col items-center bg-white text-gray-800 border-b border-gray-200">
       <div className="flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-2">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-4xl text-orange-500">storefront</span>
