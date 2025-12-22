@@ -18,6 +18,23 @@ interface ApiProduct {
   images?: ProductImage[]
 }
 
+interface ProductReview {
+  id: number
+  name: string
+  rating: number
+  comment: string
+  created_at: string
+}
+
+interface ReviewsResponse {
+  data: ProductReview[]
+  current_page: number
+  per_page: number
+  last_page: number
+  total: number
+  average_rating: number
+}
+
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
 
@@ -26,6 +43,16 @@ const ProductDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [activeImage, setActiveImage] = useState<ProductImage | null>(null)
   const [quantity, setQuantity] = useState<number>(1)
+  const [reviews, setReviews] = useState<ProductReview[]>([])
+  const [reviewsLoading, setReviewsLoading] = useState<boolean>(false)
+  const [reviewsPage, setReviewsPage] = useState<number>(1)
+  const [reviewsHasMore, setReviewsHasMore] = useState<boolean>(false)
+  const [reviewsTotal, setReviewsTotal] = useState<number>(0)
+  const [avgRatingFromReviews, setAvgRatingFromReviews] = useState<number | null>(null)
+  const [reviewName, setReviewName] = useState<string>('')
+  const [reviewComment, setReviewComment] = useState<string>('')
+  const [reviewRating, setReviewRating] = useState<number>(5)
+  const [submittingReview, setSubmittingReview] = useState<boolean>(false)
 
   const backendOrigin = useMemo(() => {
     try {
@@ -118,11 +145,12 @@ const ProductDetail: React.FC = () => {
   }, [id])
 
   const rating = useMemo(() => {
+    if (avgRatingFromReviews !== null) return avgRatingFromReviews
     if (!product) return 4.5
     const base = 3.5
     const step = (product.product_id % 5) * 0.3
     return Math.min(5, base + step)
-  }, [product])
+  }, [avgRatingFromReviews, product])
 
   const images = product?.images || []
   const heroImageUrl = useMemo(() => {
@@ -138,9 +166,10 @@ const ProductDetail: React.FC = () => {
   const percentOff = hasDiscount && listPrice && listPrice > 0 ? Math.round((savings / listPrice) * 100) : 0
 
   const reviewsCount = useMemo(() => {
+    if (reviewsTotal) return reviewsTotal
     if (!product) return 0
     return 80 + (product.product_id % 50)
-  }, [product])
+  }, [reviewsTotal, product])
 
   const handleDecreaseQty = () => {
     setQuantity((prev) => Math.max(1, prev - 1))
@@ -148,6 +177,71 @@ const ProductDetail: React.FC = () => {
 
   const handleIncreaseQty = () => {
     setQuantity((prev) => Math.min(99, prev + 1))
+  }
+
+  const fetchReviews = async (page: number, append = false) => {
+    if (!product) return
+    try {
+      setReviewsLoading(true)
+      const response = await api.get(`/products/${product.product_id}/reviews`, {
+        params: { page, per_page: 3 },
+      })
+      const payload: ReviewsResponse = response.data.data || response.data
+      const newReviews = payload.data || []
+
+      setReviews((prev) => (append ? [...prev, ...newReviews] : newReviews))
+      setReviewsPage(payload.current_page)
+      setReviewsHasMore(payload.current_page < payload.last_page)
+      setReviewsTotal(payload.total)
+      setAvgRatingFromReviews(
+        typeof payload.average_rating === 'number' && !Number.isNaN(payload.average_rating)
+          ? payload.average_rating
+          : null,
+      )
+    } catch (err) {
+      // Silent fail for reviews to not block product page
+      // console.error('Error loading reviews', err)
+    } finally {
+      setReviewsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (product) {
+      fetchReviews(1, false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.product_id])
+
+  const handleSubmitReview = async () => {
+    if (!product || !reviewName.trim() || !reviewComment.trim() || reviewRating < 1 || reviewRating > 5) {
+      return
+    }
+    try {
+      setSubmittingReview(true)
+      await api.post(`/products/${product.product_id}/reviews`, {
+        name: reviewName.trim(),
+        rating: reviewRating,
+        comment: reviewComment.trim(),
+      })
+
+      setReviewComment('')
+      setReviewName('')
+      setReviewRating(5)
+
+      // Reload first page so stats stay correct
+      fetchReviews(1, false)
+    } catch (err: any) {
+      // You could show a toast here if you have a system
+      console.error('Error submitting review', err)
+    } finally {
+      setSubmittingReview(false)
+    }
+  }
+
+  const handleLoadMoreReviews = () => {
+    if (!reviewsHasMore || reviewsLoading || !product) return
+    fetchReviews(reviewsPage + 1, true)
   }
 
   if (loading) {
@@ -331,173 +425,138 @@ const ProductDetail: React.FC = () => {
               <div className="lg:col-span-1">
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 sticky top-24">
                   <h3 className="text-lg font-bold text-gray-900 mb-4">Write a Review</h3>
-                  <form className="space-y-4">
+                  <div className="space-y-4">
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Rating</label>
                       <div className="flex gap-1">
-                        <button className="group" type="button">
-                          <span className="material-symbols-outlined text-yellow-400 text-2xl group-hover:scale-110 transition-transform">
-                            star
-                          </span>
-                        </button>
-                        <button className="group" type="button">
-                          <span className="material-symbols-outlined text-yellow-400 text-2xl group-hover:scale-110 transition-transform">
-                            star
-                          </span>
-                        </button>
-                        <button className="group" type="button">
-                          <span className="material-symbols-outlined text-yellow-400 text-2xl group-hover:scale-110 transition-transform">
-                            star
-                          </span>
-                        </button>
-                        <button className="group" type="button">
-                          <span className="material-symbols-outlined text-yellow-400 text-2xl group-hover:scale-110 transition-transform">
-                            star
-                          </span>
-                        </button>
-                        <button className="group" type="button">
-                          <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-2xl group-hover:text-yellow-400 transition-colors">
-                            star
-                          </span>
-                        </button>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setReviewRating(star)}
+                            className="group"
+                          >
+                            <span
+                              className={`material-symbols-outlined text-2xl transition-transform group-hover:scale-110 ${
+                                star <= reviewRating ? 'text-yellow-400' : 'text-gray-300'
+                              }`}
+                            >
+                              star
+                            </span>
+                          </button>
+                        ))}
                       </div>
                     </div>
 
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Name</label>
                       <input
-                        className="w-full rounded-xl border-gray-200 bg-gray-50 text-gray-900 text-sm focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none shadow-sm"
                         placeholder="Your Name"
                         type="text"
+                        value={reviewName}
+                        onChange={(e) => setReviewName(e.target.value)}
                       />
                     </div>
 
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Comment</label>
                       <textarea
-                        className="w-full rounded-xl border-gray-200 bg-gray-50 text-gray-900 text-sm focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none shadow-sm"
                         placeholder="How was your experience?"
                         rows={4}
-                      ></textarea>
+                        value={reviewComment}
+                        onChange={(e) => setReviewComment(e.target.value)}
+                      />
                     </div>
 
                     <button
-                      className="w-full bg-orange-500 text-white font-bold py-3 px-6 rounded-xl hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20"
+                      className="w-full bg-orange-500 text-white font-bold py-3 px-6 rounded-xl hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
                       type="button"
+                      onClick={handleSubmitReview}
+                      disabled={submittingReview || !reviewName.trim() || !reviewComment.trim()}
                     >
-                      Submit Review
+                      {submittingReview ? 'Submitting...' : 'Submit Review'}
                     </button>
-                  </form>
+                  </div>
                 </div>
               </div>
 
               <div className="lg:col-span-2 space-y-6">
                 <div className="flex items-center justify-between pb-6 border-b border-gray-100">
                   <div>
-                    <span className="text-3xl font-bold text-gray-900">4.8</span>
+                    <span className="text-3xl font-bold text-gray-900">{rating.toFixed(1)}</span>
                     <div className="flex text-yellow-400 text-sm mt-1">
-                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                      <span className="material-symbols-outlined text-[16px] fill-current text-yellow-400/50">star_half</span>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <span key={star} className="material-symbols-outlined text-[16px] fill-current">
+                          {star <= Math.round(rating) ? 'star' : 'star_border'}
+                        </span>
+                      ))}
                     </div>
-                    <span className="text-sm text-gray-500 mt-1 block">Based on 128 reviews</span>
-                  </div>
-                  <select className="rounded-lg border-gray-200 bg-white text-sm text-gray-500 focus:ring-primary focus:border-primary">
-                    <option>Most Recent</option>
-                    <option>Highest Rated</option>
-                    <option>Lowest Rated</option>
-                  </select>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 pt-1">
-                    <div className="size-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm">
-                      JD
-                    </div>
-                  </div>
-                  <div className="flex-grow">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
-                      <h4 className="font-bold text-gray-900 text-sm">Jane Doe</h4>
-                      <span className="text-xs text-gray-400">2 days ago</span>
-                    </div>
-                    <div className="flex text-yellow-400 text-sm mb-2">
-                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                    </div>
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      Absolutely love this scent! It's not too overpowering but fills the room nicely. The packaging was also
-                      super secure. Will definitely buy again.
-                    </p>
+                    <span className="text-sm text-gray-500 mt-1 block">
+                      {reviewsTotal ? `Based on ${reviewsTotal} reviews` : 'No reviews yet'}
+                    </span>
                   </div>
                 </div>
 
-                <hr className="border-gray-100" />
+                {reviews.length === 0 && !reviewsLoading && (
+                  <p className="text-sm text-gray-500">No reviews yet. Be the first to write one!</p>
+                )}
 
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 pt-1">
-                    <div className="size-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
-                      MS
-                    </div>
-                  </div>
-                  <div className="flex-grow">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
-                      <h4 className="font-bold text-gray-900 text-sm">Mike Smith</h4>
-                      <span className="text-xs text-gray-400">1 week ago</span>
-                    </div>
-                    <div className="flex text-yellow-400 text-sm mb-2">
-                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                      <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-[16px] fill-current">
-                        star
-                      </span>
-                    </div>
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      Great candle for the price. The burn is even, which is rare for some soy candles I've tried. The scent is
-                      very relaxing, perfect for bath time.
-                    </p>
-                  </div>
-                </div>
+                {reviews.map((review) => {
+                  const initials = review.name
+                    .split(' ')
+                    .filter((p) => p.length > 0)
+                    .slice(0, 2)
+                    .map((p) => p[0].toUpperCase())
+                    .join('') || 'U'
 
-                <hr className="border-gray-100" />
+                  const created = new Date(review.created_at)
+                  const createdLabel = Number.isNaN(created.getTime())
+                    ? ''
+                    : created.toLocaleDateString(undefined, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })
 
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 pt-1">
-                    <div className="size-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-sm">
-                      EM
+                  return (
+                    <div key={review.id} className="flex gap-4">
+                      <div className="flex-shrink-0 pt-1">
+                        <div className="size-10 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center font-bold text-sm">
+                          {initials}
+                        </div>
+                      </div>
+                      <div className="flex-grow">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
+                          <h4 className="font-bold text-gray-900 text-sm">{review.name}</h4>
+                          {createdLabel && <span className="text-xs text-gray-400">{createdLabel}</span>}
+                        </div>
+                        <div className="flex text-yellow-400 text-sm mb-2">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <span key={star} className="material-symbols-outlined text-[16px] fill-current">
+                              {star <= review.rating ? 'star' : 'star_border'}
+                            </span>
+                          ))}
+                        </div>
+                        <p className="text-gray-600 text-sm leading-relaxed">{review.comment}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex-grow">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
-                      <h4 className="font-bold text-gray-900 text-sm">Emily Martinez</h4>
-                      <span className="text-xs text-gray-400">3 weeks ago</span>
-                    </div>
-                    <div className="flex text-yellow-400 text-sm mb-2">
-                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                      <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                    </div>
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      I was skeptical about ordering candles online without smelling them first, but this one exceeded my
-                      expectations. It smells like a luxury hotel lobby. The throw is amazing too, I can smell it in the
-                      hallway.
-                    </p>
-                  </div>
-                </div>
+                  )
+                })}
 
-                <div className="pt-4 text-center">
-                  <button className="px-6 py-3 border border-gray-300 rounded-xl font-medium text-gray-900 hover:bg-gray-50 transition-colors text-sm">
-                    Load More Reviews
-                  </button>
-                </div>
+                {reviewsHasMore && (
+                  <div className="pt-4 text-center">
+                    <button
+                      type="button"
+                      onClick={handleLoadMoreReviews}
+                      disabled={reviewsLoading}
+                      className="px-6 py-3 border border-gray-300 rounded-xl font-medium text-gray-900 hover:bg-gray-50 transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {reviewsLoading ? 'Loading...' : 'Load More Reviews'}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
