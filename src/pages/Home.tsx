@@ -175,7 +175,7 @@ const Home: React.FC = () => {
     'https://lh3.googleusercontent.com/aida-public/AB6AXuC0s4BvKN-irQp4V2kl0BnRhzJEk23E-h5M8chj1EUlbQgEnOs02XBYRIvSFrE91oi1Cqdg9cu958ySBxbUxSWJyUq2Cg2ty54V_Nofxk7-GL435ctSzb7lOEzAs8UdZt_hdyZIZV_iDX-lirQU0SobXjGfdeUq9WNHIRX9lxlSTDXZ_6Id95HEp9ve55defGOhYmCZOXso73sm82IRMKQ75fkPLuGq1wN-1y7QsYQJftOvaxGvaPdxJqu0cHDbJECiAXRc1QaA_Bg';
 
   return (
-    <div className="flex w-full flex-1 flex-col items-center">
+    <div className="flex w-full flex-1 flex-col items-center mt-16">
       <div className="flex w-full max-w-7xl flex-col">
         {/* Hero Section */}
         <HeroSection />
