@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useCart } from '../contexts/CartContext';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { itemCount } = useCart();
 
   return (
     <header className="sticky top-0 z-50 flex w-full flex-col items-center bg-white text-gray-800 border-b border-gray-200">
@@ -48,13 +50,13 @@ const Header: React.FC = () => {
             <span className="text-xs font-normal text-gray-600">Hello, sign in</span>
             <span className="text-sm font-bold text-gray-800">Account & Lists</span>
           </button>
-          <button className="flex items-end gap-1 rounded px-2 py-1 hover:bg-gray-100">
+          <Link to="/cart" className="flex items-end gap-1 rounded px-2 py-1 hover:bg-gray-100">
             <div className="relative">
               <span className="material-symbols-outlined text-3xl">shopping_cart</span>
-              <span className="absolute -right-1 top-0 text-base font-bold text-orange-500">0</span>
+              <span className="absolute -right-5 -top-1 text-base font-bold text-orange-500">{itemCount}</span>
             </div>
             <span className="hidden text-sm font-bold text-gray-800 lg:block">Cart</span>
-          </button>
+          </Link>
         </div>
       </div>
       
