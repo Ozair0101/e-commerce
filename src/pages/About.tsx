@@ -3,7 +3,7 @@ import heroImage from '../assets/24.jpg';
 
 const About: React.FC = () => {
   return (
-    <div className="flex w-full flex-1 flex-col items-center">
+    <div className="flex w-full flex-1 flex-col items-center mt-32">
       <div className="flex w-full max-w-7xl flex-col">
         <main className="flex flex-col items-center">
           {/* Hero Section */}
