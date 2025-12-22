@@ -166,10 +166,8 @@ const ProductDetail: React.FC = () => {
   const percentOff = hasDiscount && listPrice && listPrice > 0 ? Math.round((savings / listPrice) * 100) : 0
 
   const reviewsCount = useMemo(() => {
-    if (reviewsTotal) return reviewsTotal
-    if (!product) return 0
-    return 80 + (product.product_id % 50)
-  }, [reviewsTotal, product])
+    return reviewsTotal || 0
+  }, [reviewsTotal])
 
   const handleDecreaseQty = () => {
     setQuantity((prev) => Math.max(1, prev - 1))
