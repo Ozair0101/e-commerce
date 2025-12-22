@@ -1,6 +1,174 @@
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { useParams } from 'react-router-dom'
+import api from '../utils/api'
+
+interface ProductImage {
+  id: number
+  url: string
+  is_primary: boolean
+}
+
+interface ApiProduct {
+  product_id: number
+  name: string
+  price: number
+  discount_price: number | null
+  stock_quantity: number
+  category_id: string
+  images?: ProductImage[]
+}
 
 const ProductDetail: React.FC = () => {
+  const { id } = useParams<{ id: string }>()
+
+  const [product, setProduct] = useState<ApiProduct | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
+  const [activeImage, setActiveImage] = useState<ProductImage | null>(null)
+  const [quantity, setQuantity] = useState<number>(1)
+
+  const backendOrigin = useMemo(() => {
+    try {
+      const base = (api.defaults.baseURL as string) || ''
+      return base ? new URL(base).origin : window.location.origin
+    } catch {
+      return window.location.origin
+    }
+  }, [])
+
+  const resolveImageUrl = (url: string | undefined) => {
+    if (!url) return ''
+
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      try {
+        const parsed = new URL(url)
+        const backend = new URL(backendOrigin)
+
+        const isLocalhost = parsed.hostname === 'localhost'
+        const hasNoPort = !parsed.port
+        const backendHasPort = !!backend.port
+
+        if (isLocalhost && hasNoPort && backendHasPort) {
+          return `${backendOrigin}${parsed.pathname}${parsed.search}${parsed.hash}`
+        }
+
+        return url
+      } catch {
+        return url
+      }
+    }
+
+    return `${backendOrigin}${url.startsWith('/') ? '' : '/'}${url}`
+  }
+
+  const getFinalPrice = (p: ApiProduct) => {
+    if (p.discount_price !== null && Number(p.discount_price) < Number(p.price)) {
+      return Number(p.discount_price)
+    }
+    return Number(p.price)
+  }
+
+  useEffect(() => {
+    if (!id) {
+      setError('Invalid product ID')
+      setLoading(false)
+      return
+    }
+
+    let isMounted = true
+
+    const fetchProduct = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        const response = await api.get(`/products/${id}`)
+        const data: ApiProduct = response.data.data || response.data
+
+        if (!isMounted) return
+
+        setProduct(data)
+
+        const primaryImage =
+          data.images && data.images.length > 0
+            ? data.images.find((img) => img.is_primary) || data.images[0]
+            : null
+        setActiveImage(primaryImage)
+      } catch (err: any) {
+        console.error('Error fetching product details:', err)
+        let message = 'Failed to load product details.'
+        if (err.response?.data?.message) {
+          message = err.response.data.message
+        }
+        if (isMounted) {
+          setError(message)
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchProduct()
+
+    return () => {
+      isMounted = false
+    }
+  }, [id])
+
+  const rating = useMemo(() => {
+    if (!product) return 4.5
+    const base = 3.5
+    const step = (product.product_id % 5) * 0.3
+    return Math.min(5, base + step)
+  }, [product])
+
+  const images = product?.images || []
+  const heroImageUrl = useMemo(() => {
+    if (activeImage) return resolveImageUrl(activeImage.url)
+    if (images[0]) return resolveImageUrl(images[0].url)
+    return 'https://lh3.googleusercontent.com/aida-public/AB6AXuBhZz0gj8arLag2ceEFB9yyWz9WNk3oSGEWmE6v7ElpCZQ-ojwDkoPDyw8qtI-tvg1yxdXhRWkvEtWUAbmWWhgSONjX0mrtaXEjTDZtWTNBZ25u7ykv06EwhjoGEh82Joqck2Y1GP1Xb9Y1PvdQ3py9up7Vkcy5vYNwvRRdIjHKPS_ND1I7L7GM9woxPMOfMBWlU62VUVWEDzdCwbK8fnzXE-amtrE3QnwA2cf-sDWF9VUGN2emCavB2vsDn5aDtPzkFUGLuzGCv7kp'
+  }, [activeImage, images])
+
+  const finalPrice = product ? getFinalPrice(product) : null
+  const hasDiscount = product && product.discount_price !== null && finalPrice! < Number(product.price)
+  const listPrice = product ? Number(product.price) : null
+  const savings = hasDiscount && listPrice !== null ? listPrice - finalPrice! : 0
+  const percentOff = hasDiscount && listPrice && listPrice > 0 ? Math.round((savings / listPrice) * 100) : 0
+
+  const reviewsCount = useMemo(() => {
+    if (!product) return 0
+    return 80 + (product.product_id % 50)
+  }, [product])
+
+  const handleDecreaseQty = () => {
+    setQuantity((prev) => Math.max(1, prev - 1))
+  }
+
+  const handleIncreaseQty = () => {
+    setQuantity((prev) => Math.min(99, prev + 1))
+  }
+
+  if (loading) {
+    return (
+      <div className="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="size-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading product...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !product) {
+    return (
+      <div className="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white min-h-screen flex items-center justify-center">
+        <p className="text-sm text-gray-500 dark:text-gray-400">{error || 'Product not found.'}</p>
+      </div>
+    )
+  }
+
   return (
     <div className="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white min-h-screen flex flex-col">
       <header className="bg-white dark:bg-[#1a2c22] border-b border-gray-100 dark:border-gray-800 sticky top-0 z-50">
@@ -61,29 +229,33 @@ const ProductDetail: React.FC = () => {
             </a>
             <span className="mx-2 text-gray-300">/</span>
             <a className="hover:text-primary transition-colors" href="#">
-              Shop Candles
+              {product.category_id || 'Products'}
             </a>
             <span className="mx-2 text-gray-300">/</span>
             <a className="hover:text-primary transition-colors" href="#">
               Signature Collection
             </a>
             <span className="mx-2 text-gray-300">/</span>
-            <span className="text-slate-900 dark:text-white font-medium">Lavender Driftwood</span>
+            <span className="text-slate-900 dark:text-white font-medium">{product.name}</span>
           </nav>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 xl:gap-20">
             <div className="space-y-4">
               <div className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-[2rem] overflow-hidden relative group">
-                <div className="absolute top-4 left-4 z-10">
-                  <span className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">-28% OFF</span>
-                  <span className="bg-white/90 backdrop-blur text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm ml-2">
-                    Bestseller
+                <div className="absolute top-4 left-4 z-10 flex flex-wrap gap-2">
+                  {hasDiscount && percentOff > 0 && (
+                    <span className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+                      -{percentOff}% OFF
+                    </span>
+                  )}
+                  <span className="bg-white/90 backdrop-blur text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+                    Product #{product.product_id}
                   </span>
                 </div>
                 <img
-                  alt="Lavender Driftwood Candle Large"
+                  alt={product.name}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhZz0gj8arLag2ceEFB9yyWz9WNk3oSGEWmE6v7ElpCZQ-ojwDkoPDyw8qtI-tvg1yxdXhRWkvEtWUAbmWWhgSONjX0mrtaXEjTDZtWTNBZ25u7ykv06EwhjoGEh82Joqck2Y1GP1Xb9Y1PvdQ3py9up7Vkcy5vYNwvRRdIjHKPS_ND1I7L7GM9woxPMOfMBWlU62VUVWEDzdCwbK8fnzXE-amtrE3QnwA2cf-sDWF9VUGN2emCavB2vsDn5aDtPzkFUGLuzGCv7kp"
+                  src={heroImageUrl}
                 />
                 <button className="absolute bottom-4 right-4 size-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-slate-900 hover:bg-primary transition-colors">
                   <span className="material-symbols-outlined text-[20px]">zoom_in</span>
@@ -91,37 +263,42 @@ const ProductDetail: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-4 gap-4">
-                <button className="aspect-square rounded-2xl overflow-hidden border-2 border-primary ring-2 ring-primary/20 transition-all">
-                  <img
-                    alt="Front view"
-                    className="w-full h-full object-cover"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhZz0gj8arLag2ceEFB9yyWz9WNk3oSGEWmE6v7ElpCZQ-ojwDkoPDyw8qtI-tvg1yxdXhRWkvEtWUAbmWWhgSONjX0mrtaXEjTDZtWTNBZ25u7ykv06EwhjoGEh82Joqck2Y1GP1Xb9Y1PvdQ3py9up7Vkcy5vYNwvRRdIjHKPS_ND1I7L7GM9woxPMOfMBWlU62VUVWEDzdCwbK8fnzXE-amtrE3QnwA2cf-sDWF9VUGN2emCavB2vsDn5aDtPzkFUGLuzGCv7kp"
-                  />
-                </button>
-                <button className="aspect-square rounded-2xl overflow-hidden border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 transition-all opacity-70 hover:opacity-100">
-                  <img
-                    alt="Side view"
-                    className="w-full h-full object-cover"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXDjhUB2bQtcSMNXBYoGVf3mIsiO-myCJL2_nBIWz5QNPyuCq38IqjcW_h-s0r5X1wN6nIscwEsNN7WZsTZ-pyYOx88iGDas85wwERdFT5vziz5FnLQ8iRnnV9ePsdSMOfiWyeOBAC_Di5Zfx8VnqU03C9WCBBNZ3XcN540dO9_t7kWqWhzKBjA8_3c1JjtSosOTEIYN22YKAjiHvJM7gmKpFrG0vrGQccN9XETydldkLAb7Srx-qs-flCwGP2K5X9k3ZpjrYhd2G2"
-                  />
-                </button>
-                <button className="aspect-square rounded-2xl overflow-hidden border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 transition-all opacity-70 hover:opacity-100">
-                  <img
-                    alt="Texture detail"
-                    className="w-full h-full object-cover"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuC32oK4rUnAHFclLdwSQdth-uyUFr-q9jxlVs9uHZZuEetNfzTaSPoxBfd5Abjk61lihGmUKFsRIGWm3tmvBdYUouNchzeBlwUzI2nV0Sj_AqKit5vi1z81labvFpZ9Qh4wn02T6x_9Bwdk3qTs5s0H7GLHMvgmjOtrC8T2Ur0_wEAmVVPkPM9KbOrQquceZ1VyYIpBNViPNrgcwULN-2--_OkZHeFiWCktozGnv_WXFN1cWv-R-twUfnW8snKu1Bb6bQDJ-q1WbCE3"
-                  />
-                </button>
-                <button className="aspect-square rounded-2xl overflow-hidden border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 transition-all opacity-70 hover:opacity-100 bg-gray-50 flex items-center justify-center text-gray-400">
-                  <span className="material-symbols-outlined">play_circle</span>
-                </button>
+                {images.length === 0 && (
+                  <button className="aspect-square rounded-2xl overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center text-gray-400">
+                    <span className="material-symbols-outlined">image</span>
+                  </button>
+                )}
+                {images.map((img) => {
+                  const url = resolveImageUrl(img.url)
+                  const isActive = activeImage ? activeImage.id === img.id : false
+                  return (
+                    <button
+                      key={img.id}
+                      type="button"
+                      onClick={() => setActiveImage(img)}
+                      className={`aspect-square rounded-2xl overflow-hidden border-2 transition-all ${
+                        isActive
+                          ? 'border-primary ring-2 ring-primary/20'
+                          : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600 opacity-80 hover:opacity-100'
+                      }`}
+                    >
+                      {url ? (
+                        <img alt={product.name} className="w-full h-full object-cover" src={url} />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          <span className="material-symbols-outlined">image</span>
+                        </div>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
             <div className="flex flex-col">
               <div className="mb-6">
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mb-4 leading-tight">
-                  Lavender Driftwood
+                  {product.name}
                 </h1>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="flex items-center gap-1">
@@ -135,19 +312,26 @@ const ProductDetail: React.FC = () => {
                     className="text-sm font-medium text-slate-500 hover:text-primary underline decoration-slate-300 underline-offset-4"
                     href="#reviews"
                   >
-                    4.8 (128 Reviews)
+                    {rating.toFixed(1)} ({reviewsCount} Reviews)
                   </a>
                 </div>
                 <div className="flex items-end gap-3">
-                  <span className="text-3xl font-bold text-slate-900 dark:text-white">$18.00</span>
-                  <span className="text-xl text-gray-400 line-through decoration-red-400 mb-1">$25.00</span>
+                  {finalPrice !== null && (
+                    <span className="text-3xl font-bold text-slate-900 dark:text-white">
+                      ${finalPrice.toFixed(2)}
+                    </span>
+                  )}
+                  {hasDiscount && listPrice !== null && (
+                    <span className="text-xl text-gray-400 line-through decoration-red-400 mb-1">
+                      ${listPrice.toFixed(2)}
+                    </span>
+                  )}
                 </div>
               </div>
 
               <p className="text-slate-600 dark:text-gray-300 leading-relaxed mb-8">
-                Immerse yourself in the serene blend of fresh lavender, coastal woods, and a hint of eucalyptus. Our Lavender
-                Driftwood candle is hand-poured with 100% natural soy wax for a clean, long-lasting burn that transforms your
-                space into a tranquil retreat.
+                This product is part of our {product.category_id || 'catalog'} collection. Pricing and availability are updated
+                directly from the store backend, so what you see here reflects the latest information.
               </p>
 
               <div className="space-y-6 mb-8 border-t border-b border-gray-100 dark:border-gray-800 py-6">
@@ -210,7 +394,7 @@ const ProductDetail: React.FC = () => {
                   <input
                     className="w-12 text-center bg-transparent border-none p-0 text-slate-900 dark:text-white font-bold focus:ring-0"
                     type="text"
-                    value="1"
+                    value={quantity}
                     readOnly
                   />
                   <button className="px-4 h-full text-gray-500 hover:text-primary transition-colors">
@@ -228,9 +412,16 @@ const ProductDetail: React.FC = () => {
 
               <div className="space-y-4">
                 <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-gray-400">
-                  <span className="material-symbols-outlined text-green-500">check_circle</span>
-                  <span>In stock and ready to ship</span>
+                  <span className={`material-symbols-outlined ${product.stock_quantity > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {product.stock_quantity > 0 ? 'check_circle' : 'cancel'}
+                  </span>
+                  <span>
+                    {product.stock_quantity > 0
+                      ? `In stock and ready to ship (${product.stock_quantity} available)`
+                      : 'Currently out of stock'}
+                  </span>
                 </div>
+
                 <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-gray-400">
                   <span className="material-symbols-outlined text-blue-500">local_shipping</span>
                   <span>Free shipping on orders over $50</span>
