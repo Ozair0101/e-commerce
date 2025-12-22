@@ -4,9 +4,10 @@ import ProductCard, { type Product } from './ProductCard';
 interface TopSellersProps {
   products: Product[];
   loading?: boolean;
+  onAddToCart?: (product: Product) => void;
 }
 
-const TopSellers: React.FC<TopSellersProps> = ({ products, loading }) => {
+const TopSellers: React.FC<TopSellersProps> = ({ products, loading, onAddToCart }) => {
   return (
     <section>
       <h2 className="px-4 pb-3 pt-5 text-[22px] font-bold leading-tight tracking-[-0.015em] text-gray-800">Our Recent Products</h2>
@@ -24,7 +25,9 @@ const TopSellers: React.FC<TopSellersProps> = ({ products, loading }) => {
             </div>
           ))
         ) : products.length > 0 ? (
-          products.slice(0, 10).map((p) => <ProductCard key={p.id} product={p} />)
+          products.slice(0, 10).map((p) => (
+            <ProductCard key={p.id} product={p} onAddToCart={onAddToCart} />
+          ))
         ) : (
           <div className="col-span-full text-center text-gray-500 py-10">
             No Recent products available.
