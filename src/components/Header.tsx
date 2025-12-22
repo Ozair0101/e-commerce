@@ -81,8 +81,8 @@ const Header: React.FC = () => {
       {/* Desktop Navigation */}
       <div className="hidden w-full max-w-7xl items-center gap-6 px-4 pb-2 pt-1 text-sm font-medium lg:flex">
         <Link className="rounded px-1 hover:bg-gray-100 text-gray-700" to="/">Home</Link>
-        <Link className="rounded px-1 hover:bg-gray-100 text-gray-700" to="/about">About</Link>
         <Link className="rounded px-1 hover:bg-gray-100 text-gray-700" to="/shop">Shop</Link>
+        <Link className="rounded px-1 hover:bg-gray-100 text-gray-700" to="/about">About</Link>
       </div>
       
       {/* Mobile Navigation Menu */}
@@ -98,17 +98,17 @@ const Header: React.FC = () => {
             </Link>
             <Link 
               className="py-2 px-1 hover:bg-gray-100 text-gray-700 rounded" 
-              to="/about" 
-              onClick={() => setIsMenuOpen(false)}
-            >
-              About
-            </Link>
-            <Link 
-              className="py-2 px-1 hover:bg-gray-100 text-gray-700 rounded" 
               to="/shop" 
               onClick={() => setIsMenuOpen(false)}
             >
               Shop
+            </Link>
+            <Link 
+              className="py-2 px-1 hover:bg-gray-100 text-gray-700 rounded" 
+              to="/about" 
+              onClick={() => setIsMenuOpen(false)}
+            >
+              About
             </Link>
             <Link 
               className="py-2 px-1 hover:bg-gray-100 text-gray-700 rounded" 
