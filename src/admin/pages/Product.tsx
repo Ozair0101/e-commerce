@@ -32,10 +32,51 @@ const ProductPage: React.FC = () => {
     onCancel?: () => void;
   } | null>(null);
 
+  const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('name');
+
+  const [sortBy, setSortBy] = useState('latest');
 
   const navigate = useNavigate();
+
+  const backendOrigin = (() => {
+    try {
+      const base = (api.defaults.baseURL as string) || '';
+      return base ? new URL(base).origin : window.location.origin;
+    } catch {
+      return window.location.origin;
+    }
+  })();
+
+  const resolveImageUrl = (url: string | undefined) => {
+    if (!url) return '';
+
+    // Handle absolute URLs
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      try {
+        const parsed = new URL(url);
+        const backend = new URL(backendOrigin);
+
+        // If the image URL points to localhost with no port, but our API has a port (e.g. :8000),
+        // normalize it to use the backend origin so assets are served from the correct host:port.
+        const isLocalhost = parsed.hostname === 'localhost';
+        const hasNoPort = !parsed.port;
+        const backendHasPort = !!backend.port;
+
+        if (isLocalhost && hasNoPort && backendHasPort) {
+          return `${backendOrigin}${parsed.pathname}${parsed.search}${parsed.hash}`;
+        }
+
+        return url;
+      } catch {
+        // If URL parsing fails, just fall back to the original URL
+        return url;
+      }
+    }
+
+    // Relative URL: prepend backend origin (includes correct port)
+    return `${backendOrigin}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -54,6 +95,14 @@ const ProductPage: React.FC = () => {
     fetchProducts();
   }, []);
 
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      setSearchTerm(searchInput.trim());
+    }, 250);
+
+    return () => window.clearTimeout(handle);
+  }, [searchInput]);
+
   const filteredProducts = products.filter(product => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -62,6 +111,7 @@ const ProductPage: React.FC = () => {
   });
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (sortBy === 'latest') return b.product_id - a.product_id;
     if (sortBy === 'name') return a.name.localeCompare(b.name);
     if (sortBy === 'price') return Number(a.price) - Number(b.price);
     if (sortBy === 'stock') return b.stock_quantity - a.stock_quantity;
@@ -152,8 +202,8 @@ const ProductPage: React.FC = () => {
                   type="text"
                   placeholder="Search products..."
                   className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                 />
               </div>
 
@@ -163,6 +213,7 @@ const ProductPage: React.FC = () => {
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
               >
+                <option value="latest">Sort by Latest</option>
                 <option value="name">Sort by Name</option>
                 <option value="price">Sort by Price</option>
                 <option value="stock">Sort by Stock</option>
@@ -209,7 +260,7 @@ const ProductPage: React.FC = () => {
                             <div className="bg-gray-200 rounded-xl w-12 h-12 sm:w-16 sm:h-16 overflow-hidden flex items-center justify-center">
                               {product.images && product.images.length > 0 ? (
                                 <img
-                                  src={product.images.find(img => img.is_primary)?.url || product.images[0].url}
+                                  src={resolveImageUrl(product.images.find(img => img.is_primary)?.url || product.images[0].url)}
                                   alt={product.name}
                                   className="w-full h-full object-cover"
                                 />

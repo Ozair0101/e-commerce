@@ -9,6 +9,12 @@ interface ProductImage {
   is_primary: boolean;
 }
 
+interface Category {
+  category_id: number;
+  name: string;
+  description?: string | null;
+}
+
 interface Product {
   product_id: number;
   name: string;
@@ -18,6 +24,7 @@ interface Product {
   is_active: boolean;
   stock_quantity: number;
   category_id: string;
+  category?: Category;
   images?: ProductImage[];
 }
 
@@ -26,11 +33,51 @@ const ProductDetailPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [product, setProduct] = useState<Product | null>(null);
+  const [activeImageId, setActiveImageId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [toast, setToast] = useState<{
     message: string;
     type: 'success' | 'error' | 'info' | 'warning';
   } | null>(null);
+
+  const backendOrigin = (() => {
+    try {
+      const base = (api.defaults.baseURL as string) || '';
+      return base ? new URL(base).origin : window.location.origin;
+    } catch {
+      return window.location.origin;
+    }
+  })();
+
+  const resolveImageUrl = (url: string | undefined) => {
+    if (!url) return '';
+
+    // Handle absolute URLs
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      try {
+        const parsed = new URL(url);
+        const backend = new URL(backendOrigin);
+
+        // If the image URL points to localhost with no port, but our API has a port (e.g. :8000),
+        // normalize it to use the backend origin so assets are served from the correct host:port.
+        const isLocalhost = parsed.hostname === 'localhost';
+        const hasNoPort = !parsed.port;
+        const backendHasPort = !!backend.port;
+
+        if (isLocalhost && hasNoPort && backendHasPort) {
+          return `${backendOrigin}${parsed.pathname}${parsed.search}${parsed.hash}`;
+        }
+
+        return url;
+      } catch {
+        // If URL parsing fails, just fall back to the original URL
+        return url;
+      }
+    }
+
+    // Relative URL: prepend backend origin (includes correct port)
+    return `${backendOrigin}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -39,6 +86,13 @@ const ProductDetailPage: React.FC = () => {
         const response = await api.get(`/products/${id}`);
         const data = response.data.data || response.data;
         setProduct(data);
+
+        if (data && data.images && data.images.length > 0) {
+          const primary = data.images.find((img: ProductImage) => img.is_primary);
+          setActiveImageId(primary ? primary.id : data.images[0].id);
+        } else {
+          setActiveImageId(null);
+        }
       } catch (error: any) {
         console.error('Error fetching product:', error);
         let message = 'Failed to load product details';
@@ -123,7 +177,7 @@ const ProductDetailPage: React.FC = () => {
 
             {product && (
               <p className="text-xs sm:text-sm text-gray-500">
-                Product ID: #{product.product_id} • Category ID: {product.category_id}
+                Product ID: #{product.product_id} • Category: {product.category?.name || `ID: ${product.category_id}`}
               </p>
             )}
           </div>
@@ -166,11 +220,22 @@ const ProductDetailPage: React.FC = () => {
 
                 <div className="aspect-video w-full rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden">
                   {product.images && product.images.length > 0 ? (
-                    <img
-                      src={product.images.find((img) => img.is_primary)?.url || product.images[0].url}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
+                    (() => {
+                      const fallbackMain =
+                        product.images.find((img) => img.is_primary) || product.images[0];
+                      const mainImage =
+                        (activeImageId
+                          ? product.images.find((img) => img.id === activeImageId)
+                          : fallbackMain) || fallbackMain;
+
+                      return (
+                        <img
+                          src={resolveImageUrl(mainImage.url)}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      );
+                    })()
                   ) : (
                     <span className="material-symbols-outlined text-4xl text-gray-300">image</span>
                   )}
@@ -179,20 +244,22 @@ const ProductDetailPage: React.FC = () => {
                 {product.images && product.images.length > 1 && (
                   <div className="flex gap-3 overflow-x-auto pb-1">
                     {product.images.map((img) => (
-                      <div
+                      <button
                         key={img.id}
-                        className={`w-20 h-20 rounded-md border overflow-hidden flex-shrink-0 ${
-                          img.is_primary
+                        type="button"
+                        onClick={() => setActiveImageId(img.id)}
+                        className={`w-20 h-20 rounded-md border overflow-hidden flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-orange-400 ${
+                          img.id === activeImageId || (!activeImageId && img.is_primary)
                             ? 'border-orange-500 ring-1 ring-orange-300'
                             : 'border-gray-200'
                         }`}
                       >
                         <img
-                          src={img.url}
+                          src={resolveImageUrl(img.url)}
                           alt={product.name}
                           className="w-full h-full object-cover"
                         />
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -209,7 +276,7 @@ const ProductDetailPage: React.FC = () => {
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs uppercase tracking-wide text-gray-500">Category ID</p>
-                    <p className="text-sm sm:text-base text-gray-900">{product.category_id}</p>
+                    <p className="text-sm sm:text-base text-gray-900">{product.category?.name || `ID: ${product.category_id}`}</p>
                   </div>
                 </div>
 

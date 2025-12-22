@@ -1,350 +1,445 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+
 import { Link } from 'react-router-dom';
+import api from '../utils/api';
+
+interface ProductImage {
+  id: number;
+  url: string;
+  is_primary: boolean;
+}
+
+interface ApiProduct {
+  product_id: number;
+  name: string;
+  price: number;
+  discount_price: number | null;
+  images?: ProductImage[];
+}
+
+interface ShopProduct {
+  id: number;
+  name: string;
+  price: number;
+  discountPrice: number | null;
+  image: string;
+  rating: number;
+}
+
+type SortOption = 'featured';
 
 const Shop: React.FC = () => {
-    return (
-        <main className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 md:px-10 py-5">
-            {/* Breadcrumbs */}
-            <div className="flex flex-wrap gap-2 py-4">
-                <Link className="text-gray-500 hover:text-orange-500 text-sm font-medium leading-normal" to="/">
-                    Home
-                </Link>
-                <span className="text-gray-500 text-sm font-medium leading-normal">/</span>
-                <Link className="text-gray-500 hover:text-orange-500 text-sm font-medium leading-normal" to="#">
-                    Electronics
-                </Link>
-                <span className="text-gray-500 text-sm font-medium leading-normal">/</span>
-                <span className="text-gray-800 text-sm font-medium leading-normal">Laptops</span>
+  const [products, setProducts] = useState<ShopProduct[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [maxPriceFilter, setMaxPriceFilter] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  const backendOrigin = useMemo(() => {
+    try {
+      const base = (api.defaults.baseURL as string) || '';
+      return base ? new URL(base).origin : window.location.origin;
+    } catch {
+      return window.location.origin;
+    }
+  }, []);
+
+  const resolveImageUrl = (url: string | undefined) => {
+    if (!url) return '';
+
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      try {
+        const parsed = new URL(url);
+        const backend = new URL(backendOrigin);
+
+        const isLocalhost = parsed.hostname === 'localhost';
+        const hasNoPort = !parsed.port;
+        const backendHasPort = !!backend.port;
+
+        if (isLocalhost && hasNoPort && backendHasPort) {
+          return `${backendOrigin}${parsed.pathname}${parsed.search}${parsed.hash}`;
+        }
+
+        return url;
+      } catch {
+        return url;
+      }
+    }
+
+    return `${backendOrigin}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
+  const getRatingForProduct = (id: number) => {
+    // Simple deterministic pseudo-rating between 3.0 and 5.0
+    const base = 3;
+    const step = (id % 5) * 0.5;
+    return Math.min(5, base + step);
+  };
+
+  const getFinalPrice = (p: ShopProduct) => {
+    if (p.discountPrice !== null && p.discountPrice < p.price) {
+      return p.discountPrice;
+    }
+    return p.price;
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await api.get('/products');
+        const data: ApiProduct[] = response.data.data || response.data;
+
+        if (!isMounted) return;
+
+        const mapped: ShopProduct[] = data.map((p) => {
+          const primaryImage =
+            p.images && p.images.length > 0
+              ? p.images.find((img) => img.is_primary) || p.images[0]
+              : undefined;
+
+          return {
+            id: p.product_id,
+            name: p.name,
+            price: Number(p.price),
+            discountPrice:
+              p.discount_price !== null && Number(p.discount_price) < Number(p.price)
+                ? Number(p.discount_price)
+                : null,
+            image: resolveImageUrl(primaryImage?.url),
+            rating: getRatingForProduct(p.product_id),
+          };
+        });
+
+        setProducts(mapped);
+      } catch (err: any) {
+        console.error('Error fetching products for shop page:', err);
+        let message = 'Failed to load products.';
+        if (err.response?.data?.message) {
+          message = err.response.data.message;
+        }
+        setError(message);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchProducts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [backendOrigin]);
+
+  // Debounce search input so we don't refilter on every keystroke
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      setSearchTerm(searchInput.trim());
+      setCurrentPage(1);
+    }, 250);
+
+    return () => window.clearTimeout(handle);
+  }, [searchInput]);
+
+  const priceBounds = useMemo(() => {
+    if (products.length === 0) {
+      return { min: 0, max: 0 };
+    }
+    const prices = products.map((p) => getFinalPrice(p));
+    return {
+      min: Math.min(...prices),
+      max: Math.max(...prices),
+    };
+  }, [products]);
+
+  const filteredAndSorted = useMemo(() => {
+    let list = [...products];
+
+    // Text search by product name
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      list = list.filter((p) => p.name.toLowerCase().includes(term));
+    }
+
+    // Max price filter using final price (after discount)
+    const effectiveMax =
+      maxPriceFilter !== null && maxPriceFilter > 0
+        ? maxPriceFilter
+        : priceBounds.max;
+
+    if (products.length > 0 && priceBounds.max > 0) {
+      list = list.filter((p) => getFinalPrice(p) <= effectiveMax + 1e-6);
+    }
+
+    // Featured sorting: discounted first, then newest (by id desc)
+    list.sort((a, b) => {
+      const aDiscount = a.discountPrice !== null && a.discountPrice < a.price;
+      const bDiscount = b.discountPrice !== null && b.discountPrice < b.price;
+      if (aDiscount && !bDiscount) return -1;
+      if (!aDiscount && bDiscount) return 1;
+      return b.id - a.id;
+    });
+
+    return list;
+  }, [products, searchTerm, maxPriceFilter, priceBounds]);
+
+  const itemsPerPage = 12;
+  const totalPages = Math.max(1, Math.ceil(filteredAndSorted.length / itemsPerPage));
+  const safePage = Math.min(currentPage, totalPages);
+  const pageItems = filteredAndSorted.slice(
+    (safePage - 1) * itemsPerPage,
+    safePage * itemsPerPage,
+  );
+
+  const renderStars = (rating: number) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i += 1) {
+      const diff = rating - i;
+      let icon = 'star_border';
+      if (diff >= 0) {
+        icon = 'star';
+      } else if (diff > -1) {
+        icon = 'star_half';
+      }
+      stars.push(
+        <span key={i} className={`material-symbols-outlined !text-lg ${icon === 'star_border' ? 'text-gray-300' : ''}`}>
+          {icon}
+        </span>,
+      );
+    }
+    return <div className="flex text-orange-500">{stars}</div>;
+  };
+
+  return (
+    <main className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 md:px-10 py-5">
+      {/* Breadcrumbs */}
+      <div className="flex flex-wrap gap-2 py-4">
+        <Link className="text-gray-500 hover:text-orange-500 text-sm font-medium leading-normal" to="/">
+          Home
+        </Link>
+        <span className="text-gray-500 text-sm font-medium leading-normal">/</span>
+        <span className="text-gray-800 text-sm font-medium leading-normal">Shop</span>
+      </div>
+
+      {/* Page Heading, Search & Price Range */}
+      <div className="flex flex-col sm:flex-row flex-wrap justify-between items-start sm:items-center gap-3 py-4">
+        <div className="flex min-w-72 flex-col gap-1">
+          <p className="text-3xl font-black leading-tight tracking-[-0.033em]">All Products</p>
+          <p className="text-gray-500 text-sm font-normal leading-normal">
+            {loading
+              ? 'Loading products...'
+              : `${filteredAndSorted.length} product${filteredAndSorted.length === 1 ? '' : 's'} found`}
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search products..."
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 pl-9 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:border-orange-500"
+            />
+            <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-base">
+              search
+            </span>
+          </div>
+          {products.length > 0 && priceBounds.max > 0 && (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-xs sm:text-sm">
+              <span className="font-medium text-gray-700">Max price:</span>
+              <div className="flex items-center gap-2 w-full sm:w-56">
+                <span className="text-gray-500 text-xs">
+                  ${priceBounds.min.toFixed(0)}
+                </span>
+                <input
+                  type="range"
+                  min={priceBounds.min}
+                  max={priceBounds.max}
+                  step={1}
+                  value={
+                    maxPriceFilter !== null && maxPriceFilter > 0
+                      ? maxPriceFilter
+                      : priceBounds.max
+                  }
+                  onChange={(e) => {
+                    setMaxPriceFilter(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="w-full accent-orange-500"
+                />
+                <span className="text-gray-900 text-xs font-semibold whitespace-nowrap">
+                  $
+                  {(
+                    maxPriceFilter !== null && maxPriceFilter > 0
+                      ? maxPriceFilter
+                      : priceBounds.max
+                  ).toFixed(0)}
+                </span>
+              </div>
             </div>
-            {/* Page Heading & Sorting Chips */}
-            <div className="flex flex-col sm:flex-row flex-wrap justify-between items-start sm:items-center gap-3 py-4">
-                <div className="flex min-w-72 flex-col gap-1">
-                    <p className="text-3xl font-black leading-tight tracking-[-0.033em]">Laptops & Notebooks</p>
-                    <p className="text-gray-500 text-sm font-normal leading-normal">1-24 of over 1,000 results</p>
-                </div>
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                    <button className="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-gray-100 pl-4 pr-3">
-                        <p className="text-sm font-medium leading-normal">Sort by: Featured</p>
-                        <span className="material-symbols-outlined text-base">expand_more</span>
-                    </button>
-                    <button className="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-gray-100 pl-4 pr-3">
-                        <p className="text-sm font-medium leading-normal">Price: Low to High</p>
-                    </button>
-                    <button className="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-gray-100 pl-4 pr-3">
-                        <p className="text-sm font-medium leading-normal">Avg. Customer Review</p>
-                    </button>
-                </div>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-4">
+        {/* Product Grid */}
+        <div className="flex-1">
+          {error && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
             </div>
-            <div className="flex flex-col md:flex-row gap-8 mt-4">
-                {/* Sticky Left Sidebar (Filter Panel) */}
-                <aside className="w-full md:w-64 lg:w-72 md:sticky top-24 self-start flex-shrink-0">
-                    <div className="flex flex-col gap-6">
-                        <div>
-                            <h3 className="text-lg font-bold leading-tight tracking-[-0.015em] pb-3">Filter by</h3>
-                            <div className="flex flex-col gap-4">
-                                <div className="flex flex-col gap-2">
-                                    <h4 className="font-semibold text-sm">Brand</h4>
-                                    <label className="flex items-center gap-2">
-                                        <input
-                                            className="form-checkbox rounded border-gray-300 bg-transparent text-orange-500 focus:ring-orange-500/50"
-                                            type="checkbox"
-                                        />
-                                        <span>Apple</span>
-                                    </label>
-                                    <label className="flex items-center gap-2">
-                                        <input
-                                            className="form-checkbox rounded border-gray-300 bg-transparent text-orange-500 focus:ring-orange-500/50"
-                                            type="checkbox"
-                                        />
-                                        <span>Dell</span>
-                                    </label>
-                                    <label className="flex items-center gap-2">
-                                        <input
-                                            className="form-checkbox rounded border-gray-300 bg-transparent text-orange-500 focus:ring-orange-500/50"
-                                            type="checkbox"
-                                        />
-                                        <span>HP</span>
-                                    </label>
-                                    <label className="flex items-center gap-2">
-                                        <input
-                                            className="form-checkbox rounded border-gray-300 bg-transparent text-orange-500 focus:ring-orange-500/50"
-                                            type="checkbox"
-                                        />
-                                        <span>Lenovo</span>
-                                    </label>
-                                </div>
-                                <div className="border-t border-gray-200"></div>
-                                <div className="flex flex-col gap-2">
-                                    <h4 className="font-semibold text-sm">Price</h4>
-                                    <Link className="hover:text-orange-500" to="#">
-                                        Under $500
-                                    </Link>
-                                    <Link className="hover:text-orange-500" to="#">
-                                        $500 to $1000
-                                    </Link>
-                                    <Link className="hover:text-orange-500" to="#">
-                                        $1000 to $1500
-                                    </Link>
-                                    <Link className="hover:text-orange-500" to="#">
-                                        $1500 & Above
-                                    </Link>
-                                </div>
-                                <div className="border-t border-gray-200"></div>
-                                <div className="flex flex-col gap-2">
-                                    <h4 className="font-semibold text-sm">Customer Rating</h4>
-                                    <Link className="flex items-center gap-1 hover:text-orange-500" to="#">
-                                        <div className="flex text-orange-500">
-                                            <span className="material-symbols-outlined !text-xl">star</span>
-                                            <span className="material-symbols-outlined !text-xl">star</span>
-                                            <span className="material-symbols-outlined !text-xl">star</span>
-                                            <span className="material-symbols-outlined !text-xl">star</span>
-                                            <span className="material-symbols-outlined !text-xl text-gray-300">star</span>
-                                        </div>
-                                        <span>& Up</span>
-                                    </Link>
-                                    <Link className="flex items-center gap-1 hover:text-orange-500" to="#">
-                                        <div className="flex text-orange-500">
-                                            <span className="material-symbols-outlined !text-xl">star</span>
-                                            <span className="material-symbols-outlined !text-xl">star</span>
-                                            <span className="material-symbols-outlined !text-xl">star</span>
-                                            <span className="material-symbols-outlined !text-xl text-gray-300">star</span>
-                                            <span className="material-symbols-outlined !text-xl text-gray-300">star</span>
-                                        </div>
-                                        <span>& Up</span>
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </aside>
-                {/* Product Grid */}
-                <div className="flex-1">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {/* Product Card 1 */}
-                        <div className="flex flex-col bg-white border border-gray-200 rounded-lg overflow-hidden group">
-                            <div className="aspect-square w-full bg-cover bg-center p-4">
-                                <img
-                                    className="w-full h-full object-contain mix-blend-multiply"
-                                    alt="Silver laptop on a wooden surface"
-                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFbupISqNmsMUU2NfKMXr5y9bzqSrSGT1uBKr3-Cy0RaWn3o7nmIqS4PK-Z5ggRVRBZBdCL1NKqEYns_TH8l97cZUEvK1KJOpjKHca4nK-N2rBI_e5lw4q_mY3ab9wdF4GHKU0RcPLZB6Wv7sb-4dokWQilENTThJom_xeATKr-G_4kB84Vggw91SUZssBy7zvHtycVPJ-PCdgHVAevKowG-1plvXANNT_E1yCjwhgzhImv_WE9NPugvJPGwRDXwOLarD0GhJkHhA"
-                                />
-                            </div>
-                            <div className="p-4 flex flex-col flex-grow">
-                                <h3 className="font-semibold text-base leading-snug mb-2 hover:text-orange-500">
-                                    <Link to="#">2023 Pro Laptop, M3 Chip, 8GB RAM, 256GB SSD, 13.6-inch Display, Space Gray</Link>
-                                </h3>
-                                <div className="flex items-center gap-1 mt-auto">
-                                    <div className="flex text-orange-500">
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star_half</span>
-                                    </div>
-                                    <span className="text-sm text-gray-500">(1,258)</span>
-                                </div>
-                                <div className="text-right mt-2">
-                                    <p className="text-xl font-bold">$1,099.00</p>
-                                    <p className="text-sm text-gray-500">
-                                        List: <span className="line-through">$1,299.00</span>
-                                    </p>
-                                    <p className="text-sm text-green-600">Save $200.00 (15%)</p>
-                                </div>
-                                <button className="mt-4 w-full flex items-center justify-center rounded-lg h-10 px-4 bg-orange-500 text-white text-sm font-bold hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 focus:ring-offset-white">
-                                    Add to Cart
-                                </button>
-                            </div>
-                        </div>
-                        {/* Product Card 2 */}
-                        <div className="flex flex-col bg-white border border-gray-200 rounded-lg overflow-hidden group">
-                            <div className="aspect-square w-full bg-cover bg-center p-4">
-                                <img
-                                    className="w-full h-full object-contain mix-blend-multiply"
-                                    alt="Sleek black gaming laptop with illuminated keyboard"
-                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDK1o3GrG2RUc8PxfuoSWDxIkfcnMyECByMypaEXwhdGr21XewMMc8wVFQwuUDXPdkk0TXqlGK2Cf5lDykoPJ9uMRR46mw63Bb411tv4jRULX5lpvolbl1gkdH29bDOqob9s6_BMW1LjFv5r3wAu7cUVjwr9Zu3H_XEwmuxFqVm0dSaQ9tAZWfnoG7w3r_P0tRerLnWk1OC97dqKW2OA7DqTu9VjGXl4IzaecVdB5dwawNmM7dgfoDgdjCpix3tARSpWq3uBLuIp8"
-                                />
-                            </div>
-                            <div className="p-4 flex flex-col flex-grow">
-                                <h3 className="font-semibold text-base leading-snug mb-2 hover:text-orange-500">
-                                    <Link to="#">Gaming Beast X1, Intel Core i7, 16GB RAM, 1TB SSD, RTX 4060, 15.6-inch 144Hz Display</Link>
-                                </h3>
-                                <div className="flex items-center gap-1 mt-auto">
-                                    <div className="flex text-orange-500">
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg text-gray-300">star</span>
-                                    </div>
-                                    <span className="text-sm text-gray-500">(892)</span>
-                                </div>
-                                <div className="text-right mt-2">
-                                    <p className="text-xl font-bold">$1,449.99</p>
-                                    <p className="text-sm text-gray-500">
-                                        List: <span className="line-through">$1,599.99</span>
-                                    </p>
-                                </div>
-                                <button className="mt-4 w-full flex items-center justify-center rounded-lg h-10 px-4 bg-orange-500 text-white text-sm font-bold hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 focus:ring-offset-white">
-                                    Add to Cart
-                                </button>
-                            </div>
-                        </div>
-                        {/* Product Card 3 */}
-                        <div className="flex flex-col bg-white border border-gray-200 rounded-lg overflow-hidden group">
-                            <div className="aspect-square w-full bg-cover bg-center p-4">
-                                <img
-                                    className="w-full h-full object-contain mix-blend-multiply"
-                                    alt="Lightweight ultrabook on a clean white background"
-                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVaoAHf8lyNH3oZpPeMcjmyIO3hPIJr81ZJYWu4qmLVe6MQeB6UcNT-MOwE4twYIERVMicZWEu1GP7XbVPaEK94ejVjynTMnmlZFmo46ObRwexQRe9_93pdq8rfSnHYVxxCiMH4VgRE6Cf9FydycQ6tQ5s2aZxo59vpr6cFg9xjoVQib4YnuqxmTpHJSAoIRTlC6VAfy7pGesZYpYW4suZgmaznhK-Z2SPOHg0OUj2dOdDW8g7GMHDoynkCaC3iCmQa2tZ9fWkNIE"
-                                />
-                            </div>
-                            <div className="p-4 flex flex-col flex-grow">
-                                <h3 className="font-semibold text-base leading-snug mb-2 hover:text-orange-500">
-                                    <Link to="#">UltraSlim Notebook, Ryzen 5, 16GB RAM, 512GB SSD, 14-inch Full HD, Silver</Link>
-                                </h3>
-                                <div className="flex items-center gap-1 mt-auto">
-                                    <div className="flex text-orange-500">
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star_half</span>
-                                    </div>
-                                    <span className="text-sm text-gray-500">(2,310)</span>
-                                </div>
-                                <div className="text-right mt-2">
-                                    <p className="text-xl font-bold">$749.00</p>
-                                    <p className="text-sm text-gray-500">
-                                        List: <span className="line-through">$899.00</span>
-                                    </p>
-                                </div>
-                                <button className="mt-4 w-full flex items-center justify-center rounded-lg h-10 px-4 bg-orange-500 text-white text-sm font-bold hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 focus:ring-offset-white">
-                                    Add to Cart
-                                </button>
-                            </div>
-                        </div>
-                        {/* Repeat Product Cards */}
-                        <div className="flex flex-col bg-white border border-gray-200 rounded-lg overflow-hidden group">
-                            <div className="aspect-square w-full bg-cover bg-center p-4">
-                                <img
-                                    className="w-full h-full object-contain mix-blend-multiply"
-                                    alt="Professional series laptop in a business setting"
-                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXrl_6xNpOq99Vb-GjKbJ2yJ3edptRQCje61NzgWPCN-nA65ibNBar6h5UCcZhh2oP7htp2oTbWe3dyk8bthnDO7btS1vLmGdvcVtWKdu0w-7DO6n_aq84RNxnVcP8uRcuKRWYT9-5hSaVPcbBxNcLO_Ulk6fDecPy0dDeYXyJwDnpkbXdt9PCxEpjPgx01yZPs0_V87XG8_zKYNrX3BApKiSyCuOcmXSpi3T6w4Eo3xJ4gjjsK2eFD6njzoUCU36yfGl9mGJpnlk"
-                                />
-                            </div>
-                            <div className="p-4 flex flex-col flex-grow">
-                                <h3 className="font-semibold text-base leading-snug mb-2 hover:text-orange-500">
-                                    <Link to="#">Business ProBook 450, Intel Core i5, 8GB RAM, 256GB SSD, 15.6-inch, Windows 11 Pro</Link>
-                                </h3>
-                                <div className="flex items-center gap-1 mt-auto">
-                                    <div className="flex text-orange-500">
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg text-gray-300">star</span>
-                                    </div>
-                                    <span className="text-sm text-gray-500">(459)</span>
-                                </div>
-                                <div className="text-right mt-2">
-                                    <p className="text-xl font-bold">$899.99</p>
-                                </div>
-                                <button className="mt-4 w-full flex items-center justify-center rounded-lg h-10 px-4 bg-orange-500 text-white text-sm font-bold hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 focus:ring-offset-white">
-                                    Add to Cart
-                                </button>
-                            </div>
-                        </div>
-                        <div className="flex flex-col bg-white border border-gray-200 rounded-lg overflow-hidden group">
-                            <div className="aspect-square w-full bg-cover bg-center p-4">
-                                <img
-                                    className="w-full h-full object-contain mix-blend-multiply"
-                                    alt="A 2-in-1 convertible laptop in tablet mode"
-                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIxfzYZO80y20q2mgvnC4WWjz7YYxa4JgzeKZOKz9DCq0jrk3IQbVtceOzHzdxI-Dlf6jI7k4AOF3hRdUxzel_vkug7QClApEo7zH5RdnkJQrOmHmKJNmeYk7Rhj96Ghmrk51RKkLUdIix8Wi33LCXYcscuOsmmFkTC39T2sp8OSMFnmyLLLpUwKr_mxryFEJEKLhc89TVL-GjYwjugsl9Y0dUIuZlZCeDQTek8URuwkcpZbdJRqGjwyWoq4VHNSErvvygVj6mkEo"
-                                />
-                            </div>
-                            <div className="p-4 flex flex-col flex-grow">
-                                <h3 className="font-semibold text-base leading-snug mb-2 hover:text-orange-500">
-                                    <Link to="#">2-in-1 Touchscreen Laptop, Core i7, 16GB RAM, 512GB SSD, 14-inch QHD Display</Link>
-                                </h3>
-                                <div className="flex items-center gap-1 mt-auto">
-                                    <div className="flex text-orange-500">
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star_half</span>
-                                    </div>
-                                    <span className="text-sm text-gray-500">(671)</span>
-                                </div>
-                                <div className="text-right mt-2">
-                                    <p className="text-xl font-bold">$1,299.00</p>
-                                    <p className="text-sm text-gray-500">
-                                        List: <span className="line-through">$1,450.00</span>
-                                    </p>
-                                </div>
-                                <button className="mt-4 w-full flex items-center justify-center rounded-lg h-10 px-4 bg-orange-500 text-white text-sm font-bold hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 focus:ring-offset-white">
-                                    Add to Cart
-                                </button>
-                            </div>
-                        </div>
-                        <div className="flex flex-col bg-white border border-gray-200 rounded-lg overflow-hidden group">
-                            <div className="aspect-square w-full bg-cover bg-center p-4">
-                                <img
-                                    className="w-full h-full object-contain mix-blend-multiply"
-                                    alt="Apple laptop on a desk with accessories"
-                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5X8M_l3u1SSBgOHUTxP-weURL6b10nuJkSCjUWIQ63fys1z8M9i41QTLqgj48AHTn4Gx2DCoNsfejMwjvO6S6A2CjwznuM8_JfPl3wtIK-fnD16thmeGJH58muLiNPWnkC49M0w8A116WmBIOZEfGhv4CoE9zLvvUzIrotIS74l3I7e23PIAMWJIFPY_qCmJ2P8TGiG-GTIxqPBlKsmoIsUk556p7WBIbms7qxhmwgOi-4hcdZH5qc_8rVvv7PvzEmmxaMDvX6Uo"
-                                />
-                            </div>
-                            <div className="p-4 flex flex-col flex-grow">
-                                <h3 className="font-semibold text-base leading-snug mb-2 hover:text-orange-500">
-                                    <Link to="#">2024 Air Laptop, M3 Chip, 8GB RAM, 512GB SSD, 15-inch Display, Midnight</Link>
-                                </h3>
-                                <div className="flex items-center gap-1 mt-auto">
-                                    <div className="flex text-orange-500">
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                        <span className="material-symbols-outlined !text-lg">star</span>
-                                    </div>
-                                    <span className="text-sm text-gray-500">(540)</span>
-                                </div>
-                                <div className="text-right mt-2">
-                                    <p className="text-xl font-bold">$1,499.00</p>
-                                    <p className="text-sm text-green-600">New Release</p>
-                                </div>
-                                <button className="mt-4 w-full flex items-center justify-center rounded-lg h-10 px-4 bg-orange-500 text-white text-sm font-bold hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 focus:ring-offset-white">
-                                    Add to Cart
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    {/* Pagination */}
-                    <div className="flex justify-center items-center gap-2 mt-12">
-                        <button className="flex items-center justify-center size-10 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100">
-                            <span className="material-symbols-outlined">chevron_left</span>
-                        </button>
-                        <button className="flex items-center justify-center size-10 rounded-lg bg-orange-500 text-white font-bold">
-                            1
-                        </button>
-                        <button className="flex items-center justify-center size-10 rounded-lg hover:bg-gray-100 font-medium">
-                            2
-                        </button>
-                        <button className="flex items-center justify-center size-10 rounded-lg hover:bg-gray-100 font-medium">
-                            3
-                        </button>
-                        <span className="text-gray-500">...</span>
-                        <button className="flex items-center justify-center size-10 rounded-lg hover:bg-gray-100 font-medium">
-                            42
-                        </button>
-                        <button className="flex items-center justify-center size-10 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100">
-                            <span className="material-symbols-outlined">chevron_right</span>
-                        </button>
-                    </div>
+          )}
+
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {Array.from({ length: 9 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white rounded-[2rem] p-3 shadow-sm border border-gray-200 animate-pulse h-full"
+                >
+                  <div className="aspect-square w-full rounded-[1.5rem] bg-gray-100 mb-4" />
+                  <div className="h-4 bg-gray-100 rounded w-3/4 mb-2" />
+                  <div className="h-4 bg-gray-100 rounded w-1/2 mb-4" />
+                  <div className="h-10 bg-gray-100 rounded-xl" />
                 </div>
+              ))}
             </div>
-        </main>
-    );
+          ) : filteredAndSorted.length === 0 ? (
+            <div className="py-16 text-center text-gray-500">
+              No products match the selected filters.
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {pageItems.map((p) => {
+                  const hasDiscount = p.discountPrice !== null && p.discountPrice < p.price;
+                  const finalPrice = hasDiscount ? p.discountPrice! : p.price;
+                  const savings = hasDiscount ? p.price - p.discountPrice! : 0;
+                  const percent = hasDiscount && p.price > 0 ? Math.round((savings / p.price) * 100) : 0;
+
+                  return (
+                    <div
+                      key={p.id}
+                      className="group bg-white rounded-[2rem] p-3 shadow-sm hover:shadow-xl hover:shadow-orange-500/10 transition-all duration-300 hover:-translate-y-1 border border-gray-200 hover:border-orange-500/20"
+                    >
+                      <Link
+                        to={`/product/${p.id}`}
+                        className="block relative aspect-square w-full rounded-[1.5rem] overflow-hidden mb-4 bg-gray-100"
+                      >
+                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur text-gray-800 text-xs font-bold px-3 py-1.5 rounded-full z-10 shadow-sm">
+                          Product
+                        </div>
+                        {hasDiscount && (
+                          <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2 py-2 rounded-full z-10 shadow-sm w-12 h-12 flex items-center justify-center">
+                            -{percent}%
+                          </div>
+                        )}
+                        {p.image ? (
+                          <img
+                            src={p.image}
+                            alt={p.name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300">
+                            <span className="material-symbols-outlined text-4xl">image</span>
+                          </div>
+                        )}
+                      </Link>
+                      <div className="px-2 pb-2 flex flex-col flex-grow">
+                        <h3 className="text-lg font-bold text-gray-800 mb-1 group-hover:text-orange-500 transition-colors line-clamp-2">
+                          <Link to={`/product/${p.id}`} className="hover:text-orange-500">
+                            {p.name}
+                          </Link>
+                        </h3>
+                        <div className="flex items-center gap-2 mb-3">
+                          {renderStars(p.rating)}
+                          <span className="text-xs text-gray-500">{p.rating.toFixed(1)}</span>
+                        </div>
+                        <div className="flex items-end justify-between mb-4">
+                          <div className="flex flex-col items-start">
+                            {hasDiscount && (
+                              <span className="text-sm text-gray-400 line-through decoration-red-400">
+                                ${p.price.toFixed(2)}
+                              </span>
+                            )}
+                            <span className="text-2xl font-bold text-gray-800">
+                              ${finalPrice.toFixed(2)}
+                            </span>
+                            {hasDiscount && (
+                              <span className="text-xs text-green-600 mt-1">
+                                Save ${savings.toFixed(2)}{percent > 0 ? ` (${percent}% )` : ''}
+                              </span>
+                            )}
+                          </div>
+                          {hasDiscount && (
+                            <span className="text-xs font-medium text-orange-500 bg-orange-50 px-2 py-1 rounded-md">
+                              On Sale
+                            </span>
+                          )}
+                        </div>
+                        <button className="w-full h-12 rounded-xl bg-gray-800 text-white font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2 group/btn">
+                          <span>Add to Cart</span>
+                          <span className="material-symbols-outlined text-[18px] group-hover/btn:translate-x-1 transition-transform">
+                            shopping_bag
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-8">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    disabled={safePage === 1}
+                    className="flex items-center justify-center size-9 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-transparent"
+                  >
+                    <span className="material-symbols-outlined text-base">chevron_left</span>
+                  </button>
+                  {Array.from({ length: totalPages }).map((_, idx) => {
+                    const page = idx + 1;
+                    const isActive = page === safePage;
+                    return (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() => setCurrentPage(page)}
+                        className={`flex items-center justify-center min-w-9 px-2 h-9 rounded-lg text-sm font-medium ${{
+                          true: isActive,
+                        }['true'] ? 'bg-orange-500 text-white' : 'hover:bg-gray-100 text-gray-700'}`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={safePage === totalPages}
+                    className="flex items-center justify-center size-9 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-transparent"
+                  >
+                    <span className="material-symbols-outlined text-base">chevron_right</span>
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </main>
+  );
 };
 
 export default Shop;

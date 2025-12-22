@@ -44,6 +44,7 @@ const AddProductPage: React.FC = () => {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [existingImages, setExistingImages] = useState<ExistingProductImage[]>(editingProduct?.images ?? []);
+
   const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
   const [newImages, setNewImages] = useState<{ file: File; previewUrl: string; is_primary: boolean }[]>([]);
 
@@ -51,6 +52,45 @@ const AddProductPage: React.FC = () => {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
 
   const navigate = useNavigate();
+
+  const backendOrigin = (() => {
+    try {
+      const base = (api.defaults.baseURL as string) || '';
+      return base ? new URL(base).origin : window.location.origin;
+    } catch {
+      return window.location.origin;
+    }
+  })();
+
+  const resolveImageUrl = (url: string | undefined) => {
+    if (!url) return '';
+
+    // Handle absolute URLs
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      try {
+        const parsed = new URL(url);
+        const backend = new URL(backendOrigin);
+
+        // If the image URL points to localhost with no port, but our API has a port (e.g. :8000),
+        // normalize it to use the backend origin so assets are served from the correct host:port.
+        const isLocalhost = parsed.hostname === 'localhost';
+        const hasNoPort = !parsed.port;
+        const backendHasPort = !!backend.port;
+
+        if (isLocalhost && hasNoPort && backendHasPort) {
+          return `${backendOrigin}${parsed.pathname}${parsed.search}${parsed.hash}`;
+        }
+
+        return url;
+      } catch {
+        // If URL parsing fails, just fall back to the original URL
+        return url;
+      }
+    }
+
+    // Relative URL: prepend backend origin (includes correct port)
+    return `${backendOrigin}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
 
   // Fetch categories from backend
   useEffect(() => {
@@ -353,7 +393,8 @@ const AddProductPage: React.FC = () => {
                 <div className="flex flex-wrap gap-3">
                   {existingImages.map((img) => (
                     <div key={img.id} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
-                      <img src={img.url} alt="Product" className="w-full h-full object-cover" />
+                      <img src={resolveImageUrl(img.url)} alt="Product" className="w-full h-full object-cover" />
+
                       {img.is_primary && (
                         <span className="absolute top-1 left-1 bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">Primary</span>
                       )}
