@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import api from '../utils/api'
+import { useAuth } from '../contexts/AuthContext'
+import { useCart } from '../contexts/CartContext'
 
 interface ProductImage {
   id: number
@@ -37,6 +39,9 @@ interface ReviewsResponse {
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const { setCartFromApiPayload } = useCart()
 
   const [product, setProduct] = useState<ApiProduct | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
@@ -175,6 +180,25 @@ const ProductDetail: React.FC = () => {
 
   const handleIncreaseQty = () => {
     setQuantity((prev) => Math.min(99, prev + 1))
+  }
+
+  const handleAddToCart = async () => {
+    if (!product) return
+    if (!user) {
+      navigate('/login')
+      return
+    }
+
+    try {
+      const response = await api.post('/cart/items', {
+        user_id: user.id,
+        product_id: product.product_id,
+        quantity,
+      })
+      setCartFromApiPayload(response.data)
+    } catch (err) {
+      console.error('Error adding item to cart:', err)
+    }
   }
 
   const fetchReviews = async (page: number, append = false) => {
@@ -371,7 +395,10 @@ const ProductDetail: React.FC = () => {
 
               <div className="flex gap-4 mb-8">
                 <div className="flex items-center border border-gray-200 rounded-xl bg-white h-14">
-                  <button className="px-4 h-full text-gray-500 hover:text-primary transition-colors">
+                  <button
+                    className="px-4 h-full text-gray-500 hover:text-primary transition-colors"
+                    onClick={handleDecreaseQty}
+                  >
                     <span className="material-symbols-outlined text-[18px]">remove</span>
                   </button>
                   <input
@@ -380,11 +407,18 @@ const ProductDetail: React.FC = () => {
                     value={quantity}
                     readOnly
                   />
-                  <button className="px-4 h-full text-gray-500 hover:text-primary transition-colors">
+                  <button
+                    className="px-4 h-full text-gray-500 hover:text-primary transition-colors"
+                    onClick={handleIncreaseQty}
+                  >
                     <span className="material-symbols-outlined text-[18px]">add</span>
                   </button>
                 </div>
-                <button className="flex-1 bg-gray-900 text-white h-14 rounded-xl font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20">
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  className="flex-1 bg-gray-900 text-white h-14 rounded-xl font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20"
+                >
                   <span className="material-symbols-outlined">shopping_bag</span>
                   <span>Add to Cart</span>
                 </button>
