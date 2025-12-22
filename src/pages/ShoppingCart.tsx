@@ -189,7 +189,7 @@ const ShoppingCart: React.FC = () => {
 
   if (!user) {
     return (
-      <main className="flex-1 flex items-center justify-center bg-white text-gray-800 px-4">
+      <main className="flex-1 flex items-center mt-18 justify-center bg-white text-gray-800 px-4">
         <div className="max-w-md w-full text-center border border-gray-200 rounded-2xl p-6 shadow-sm">
           <h1 className="text-xl font-bold text-gray-900 mb-2">Your cart is empty</h1>
           <p className="text-sm text-gray-600 mb-4">
@@ -216,7 +216,7 @@ const ShoppingCart: React.FC = () => {
   }
 
   return (
-    <main className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 md:px-10 py-8 bg-white text-gray-800 flex-1">
+    <main className="w-full max-w-screen-xl mx-auto mt-18 px-4 sm:px-6 md:px-10 py-8 bg-white text-gray-800 flex-1">
       <div className="flex flex-wrap gap-2 mb-6 text-sm">
         <Link className="text-gray-500 hover:text-orange-500 font-medium" to="/">
           Home

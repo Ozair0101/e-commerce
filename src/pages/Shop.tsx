@@ -252,7 +252,7 @@ const Shop: React.FC = () => {
   };
 
   return (
-    <main className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 md:px-10 py-5">
+    <main className="w-full max-w-screen-xl mx-auto px-4 mt-18 sm:px-6 md:px-10 py-5">
       {/* Breadcrumbs */}
       <div className="flex flex-wrap gap-2 py-4">
         <Link className="text-gray-500 hover:text-orange-500 text-sm font-medium leading-normal" to="/">
