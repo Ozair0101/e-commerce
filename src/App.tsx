@@ -23,6 +23,8 @@ const AddProductPage = lazy(() => import('./admin/pages/AddProduct'))
 const ProductDetailPage = lazy(() => import('./admin/pages/ProductDetail'))
 const CategoryList = lazy(() => import('./admin/pages/CategoryList'))
 const AddCategory = lazy(() => import('./admin/pages/AddCategory'))
+const OrdersPage = lazy(() => import('./admin/pages/Orders'))
+const OrderDetailPage = lazy(() => import('./admin/pages/OrderDetail'))
 const AdminLayout = lazy(() => import('./admin/AdminLayout'))
 
 function App() {
@@ -53,6 +55,8 @@ function App() {
                   </ProtectedRoute>
                 }>
                   <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="orders" element={<OrdersPage />} />
+                  <Route path="orders/:orderId" element={<OrderDetailPage />} />
                   <Route path="products" element={<ProductPage />} />
                   <Route path="products/:id" element={<ProductDetailPage />} />
                   <Route path="add-product" element={<AddProductPage />} />
