@@ -21,7 +21,7 @@ const AdminLayout: React.FC = () => {
     { name: 'Categories', href: '/admin/categories', icon: 'category' },
     { name: 'Products', href: '/admin/products', icon: 'inventory_2' },
     { name: 'Orders', href: '/admin/orders', icon: 'shopping_bag' },
-    { name: 'Customers', href: '#', icon: 'group' },
+    { name: 'Customers', href: '/admin/customers', icon: 'group' },
     { name: 'Analytics', href: '#', icon: 'bar_chart' },
   ];
 
@@ -93,6 +93,7 @@ const AdminLayout: React.FC = () => {
               {location.pathname.includes('products') && !location.pathname.includes('add-product') && 'Products'}
               {location.pathname.includes('add-product') && 'Add Product'}
               {location.pathname.includes('orders') && 'Orders'}
+              {location.pathname.includes('customers') && 'Customers'}
               {location.pathname.includes('dashboard') && 'Dashboard'}
             </h2>
           </div>
