@@ -59,6 +59,14 @@ const OrdersPage: React.FC = () => {
     });
   }, [orders]);
 
+  const getPaymentLabel = (method: string) => {
+    const normalized = method.toLowerCase();
+    if (normalized === 'cod') return 'Cash on Delivery';
+    if (normalized === 'card') return 'Card';
+    if (normalized === 'paypal') return 'PayPal';
+    return method;
+  };
+
   return (
     <div className="p-6 md:p-8 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto flex flex-col gap-6">
@@ -136,7 +144,7 @@ const OrdersPage: React.FC = () => {
                         <td className="px-6 py-4 font-medium text-gray-900">#{order.order_id}</td>
                         <td className="px-6 py-4 text-gray-800">{customerName}</td>
                         <td className="px-6 py-4 text-gray-500 text-sm">{createdAt}</td>
-                        <td className="px-6 py-4 text-gray-700 text-sm">{order.payment_method.toUpperCase()}</td>
+                        <td className="px-6 py-4 text-gray-700 text-sm">{getPaymentLabel(order.payment_method)}</td>
                         <td className="px-6 py-4 text-right font-semibold text-gray-900">${total.toFixed(2)}</td>
                         <td className="px-6 py-4 text-right">
                           <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold ${statusClass}`}>

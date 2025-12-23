@@ -178,6 +178,14 @@ const OrderDetailPage: React.FC = () => {
 
   const items = order.items || [];
 
+  const getPaymentLabel = (method: string) => {
+    const normalized = method.toLowerCase();
+    if (normalized === 'cod') return 'Cash on Delivery';
+    if (normalized === 'card') return 'Card';
+    if (normalized === 'paypal') return 'PayPal';
+    return method;
+  };
+
   return (
     <div className="p-6 md:p-8 bg-gray-50 min-h-screen">
       <div className="max-w-6xl mx-auto flex flex-col gap-6">
@@ -254,7 +262,7 @@ const OrderDetailPage: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <dt className="text-gray-500">Payment Method</dt>
-                  <dd className="font-medium uppercase">{order.payment_method}</dd>
+                  <dd className="font-medium">{getPaymentLabel(order.payment_method)}</dd>
                 </div>
                 <div className="flex items-center justify-between border-t border-gray-100 pt-2 mt-1">
                   <dt className="text-gray-900 font-semibold">Total Amount</dt>
