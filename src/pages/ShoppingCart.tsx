@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+import Toast from '../components/Toast';
 
 interface CartProductImage {
   id: number;
@@ -47,6 +48,11 @@ const ShoppingCart: React.FC = () => {
   const [isShippingModalOpen, setIsShippingModalOpen] = useState<boolean>(false);
   const [submittingOrder, setSubmittingOrder] = useState<boolean>(false);
   const [shippingError, setShippingError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info' | 'warning';
+  } | null>(null);
+
   const [shippingForm, setShippingForm] = useState({
     email: user?.email || '',
     first_name: user?.name?.split(' ')[0] || '',
@@ -66,6 +72,10 @@ const ShoppingCart: React.FC = () => {
       return window.location.origin;
     }
   }, []);
+
+  const closeToast = () => {
+    setToast(null);
+  };
 
   const resolveImageUrl = (url: string | undefined) => {
     if (!url) return '';
@@ -237,7 +247,11 @@ const ShoppingCart: React.FC = () => {
       setCartFromApiPayload({ data: { ...cart, items: [] } });
 
       setIsShippingModalOpen(false);
-      navigate(`/orders/${data.order_id}`);
+      setToast({ message: 'Order placed successfully!', type: 'success' });
+
+      window.setTimeout(() => {
+        navigate(`/orders/${data.order_id}`);
+      }, 1500);
     } catch (err: any) {
       let message = 'Failed to place order.';
       if (err.response?.data?.message) {
@@ -290,6 +304,14 @@ const ShoppingCart: React.FC = () => {
 
   return (
     <main className="w-full max-w-screen-xl mx-auto mt-18 px-4 sm:px-6 md:px-10 py-8 bg-white text-gray-800 flex-1">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={closeToast}
+        />
+      )}
+
       <div className="flex flex-wrap gap-2 mb-6 text-sm">
         <Link className="text-gray-500 hover:text-orange-500 font-medium" to="/">
           Home
