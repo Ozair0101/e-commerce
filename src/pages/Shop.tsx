@@ -439,7 +439,7 @@ const Shop: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleAddToCart(p.id)}
-                          className="w-full h-12 rounded-xl bg-gray-800 text-white font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2 group/btn"
+                          className="w-full h-12 rounded-xl bg-gray-800 text-white font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2 group/btn cursor-pointer"
                         >
                           <span>Add to Cart</span>
                           <span className="material-symbols-outlined text-[18px] group-hover/btn:translate-x-1 transition-transform">
