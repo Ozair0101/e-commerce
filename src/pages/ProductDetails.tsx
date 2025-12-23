@@ -431,7 +431,7 @@ const ProductDetail: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  className="flex-1 bg-gray-900 text-white h-14 rounded-xl font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20"
+                  className="flex-1 bg-gray-900 text-white h-14 rounded-xl font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 cursor-pointer"
                 >
                   <span className="material-symbols-outlined">shopping_bag</span>
                   <span>Add to Cart</span>
