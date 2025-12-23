@@ -486,13 +486,13 @@ const ShoppingCart: React.FC = () => {
       )}
       {isShippingModalOpen && (
         <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40">
-          <div className="bg-white dark:bg-[#020617] rounded-[2rem] p-6 md:p-8 w-full max-w-2xl mx-4 shadow-xl relative">
+          <div className="bg-white rounded-[2rem] p-6 md:p-8 w-full max-w-2xl mx-4 shadow-xl relative text-gray-800">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
                   1
                 </div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Shipping Information</h2>
+                <h2 className="text-xl font-bold text-gray-900">Shipping Information</h2>
               </div>
               <button
                 type="button"
@@ -515,7 +515,7 @@ const ShoppingCart: React.FC = () => {
                   Email Address
                 </label>
                 <input
-                  className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-black/20 text-slate-900 dark:text-white text-sm focus:ring-primary focus:border-primary py-3"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 py-3 px-3 transition-colors"
                   placeholder="you@example.com"
                   type="email"
                   name="email"
@@ -529,7 +529,7 @@ const ShoppingCart: React.FC = () => {
                   First Name
                 </label>
                 <input
-                  className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-black/20 text-slate-900 dark:text-white text-sm focus:ring-primary focus:border-primary py-3"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 py-3 px-3 transition-colors"
                   placeholder="First Name"
                   type="text"
                   name="first_name"
@@ -543,7 +543,7 @@ const ShoppingCart: React.FC = () => {
                   Last Name
                 </label>
                 <input
-                  className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-black/20 text-slate-900 dark:text-white text-sm focus:ring-primary focus:border-primary py-3"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 py-3 px-3 transition-colors"
                   placeholder="Last Name"
                   type="text"
                   name="last_name"
@@ -557,7 +557,7 @@ const ShoppingCart: React.FC = () => {
                   Address
                 </label>
                 <input
-                  className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-black/20 text-slate-900 dark:text-white text-sm focus:ring-primary focus:border-primary py-3"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 py-3 px-3 transition-colors"
                   placeholder="Street Address, Apt, Suite, etc."
                   type="text"
                   name="address"
@@ -571,7 +571,7 @@ const ShoppingCart: React.FC = () => {
                   City
                 </label>
                 <input
-                  className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-black/20 text-slate-900 dark:text-white text-sm focus:ring-primary focus:border-primary py-3"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 py-3 px-3 transition-colors"
                   placeholder="City"
                   type="text"
                   name="city"
@@ -586,7 +586,7 @@ const ShoppingCart: React.FC = () => {
                     State
                   </label>
                   <select
-                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-black/20 text-slate-900 dark:text-white text-sm focus:ring-primary focus:border-primary py-3"
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 py-3 px-3 transition-colors"
                     name="state"
                     value={shippingForm.state}
                     onChange={handleShippingInputChange}
@@ -603,7 +603,7 @@ const ShoppingCart: React.FC = () => {
                     ZIP Code
                   </label>
                   <input
-                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-black/20 text-slate-900 dark:text-white text-sm focus:ring-primary focus:border-primary py-3"
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 py-3 px-3 transition-colors"
                     placeholder="12345"
                     type="text"
                     name="zip_code"
@@ -618,7 +618,7 @@ const ShoppingCart: React.FC = () => {
                   Phone Number
                 </label>
                 <input
-                  className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-black/20 text-slate-900 dark:text-white text-sm focus:ring-primary focus:border-primary py-3"
+                  className="w-full rounded-xl border-gray-200 bg-gray-50 text-gray-900 text-sm focus:ring-primary focus:border-primary py-3"
                   placeholder="(555) 123-4567"
                   type="tel"
                   name="phone"
