@@ -1,10 +1,21 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { itemCount } = useCart();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      navigate('/login');
+    }
+  };
 
   return (
     <header className="fixed top-0 left-0 z-50 flex w-full flex-col items-center bg-white text-gray-800 border-b border-gray-200">
@@ -46,10 +57,21 @@ const Header: React.FC = () => {
           <Link to="/admin/dashboard" className="hidden lg:flex items-center rounded px-2 py-1 text-left hover:bg-gray-100">
             <span className="text-sm font-bold text-gray-800">Admin</span>
           </Link>
-          <button className="hidden flex-col items-start rounded px-2 py-1 text-left hover:bg-gray-100 sm:flex">
-            <span className="text-xs font-normal text-gray-600">Hello, sign in</span>
-            <span className="text-sm font-bold text-gray-800">Account & Lists</span>
-          </button>
+          {user ? (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="hidden sm:flex flex-col items-start rounded px-2 py-1 text-left hover:bg-gray-100"
+            >
+              <span className="text-xs font-normal text-gray-600">Hello, {user.name}</span>
+              <span className="text-sm font-bold text-gray-800">Logout</span>
+            </button>
+          ) : (
+            <button className="hidden flex-col items-start rounded px-2 py-1 text-left hover:bg-gray-100 sm:flex">
+              <span className="text-xs font-normal text-gray-600">Hello, sign in</span>
+              <span className="text-sm font-bold text-gray-800">Account & Lists</span>
+            </button>
+          )}
           <Link to="/cart" className="flex items-end gap-1 rounded px-2 py-1 hover:bg-gray-100">
             <div className="relative">
               <span className="material-symbols-outlined text-3xl">shopping_cart</span>
