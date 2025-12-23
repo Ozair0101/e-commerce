@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
+import Toast from '../components/Toast';
 
 interface OrderItem {
   order_item_id?: number;
@@ -27,6 +28,14 @@ const UserOrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info' | 'warning';
+  } | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -69,6 +78,45 @@ const UserOrdersPage: React.FC = () => {
     });
   }, [orders]);
 
+  const closeToast = () => {
+    setToast(null);
+  };
+
+  const handleOpenCancelModal = (order: Order) => {
+    setOrderToCancel(order);
+    setCancelError(null);
+    setCancelModalOpen(true);
+  };
+
+  const handleCloseCancelModal = () => {
+    if (cancelling) return;
+    setCancelModalOpen(false);
+    setOrderToCancel(null);
+    setCancelError(null);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!orderToCancel) return;
+    try {
+      setCancelling(true);
+      setCancelError(null);
+      await api.delete(`/orders/${orderToCancel.order_id}`);
+      setOrders((prev) => prev.filter((o) => o.order_id !== orderToCancel.order_id));
+      setCancelModalOpen(false);
+      setOrderToCancel(null);
+      setToast({ message: 'Order cancelled successfully.', type: 'success' });
+    } catch (err: any) {
+      console.error('Error cancelling order:', err);
+      let message = 'Failed to cancel the order.';
+      if (err.response?.data?.message) {
+        message = err.response.data.message;
+      }
+      setCancelError(message);
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const formatMoney = (value: number | string | undefined) => {
     const n = typeof value === 'string' ? Number(value) : Number(value || 0);
     return `$${n.toFixed(2)}`;
@@ -108,6 +156,13 @@ const UserOrdersPage: React.FC = () => {
 
   return (
     <main className="w-full max-w-screen-xl mx-auto px-4 mt-18 sm:px-6 md:px-10 py-8">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={closeToast}
+        />
+      )}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">My Orders</h1>
@@ -169,7 +224,11 @@ const UserOrdersPage: React.FC = () => {
                     : '-';
 
                   return (
-                    <tr key={order.order_id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/60">
+                    <tr
+                      key={order.order_id}
+                      className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/60 cursor-pointer"
+                      onClick={() => navigate(`/orders/${order.order_id}`)}
+                    >
                       <td className="px-4 sm:px-6 py-4 font-medium text-gray-900">
                         <div className="flex flex-col">
                           <span>Order #{order.order_id}</span>
@@ -184,14 +243,29 @@ const UserOrdersPage: React.FC = () => {
                       <td className="px-4 sm:px-6 py-4 text-right font-semibold text-gray-900">
                         {formatMoney(order.total_amount)}
                       </td>
-                      <td className="px-4 sm:px-6 py-4 text-right">
-                        <span
-                          className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold ${statusClass(
-                            order.status,
-                          )}`}
-                        >
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                        </span>
+                      <td
+                        className="px-4 sm:px-6 py-4 text-right"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {order.status === 'pending' ? (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenCancelModal(order)}
+                            className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold ${statusClass(
+                              order.status,
+                            )} hover:brightness-95 cursor-pointer`}
+                          >
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          </button>
+                        ) : (
+                          <span
+                            className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold ${statusClass(
+                              order.status,
+                            )}`}
+                          >
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          </span>
+                        )}
                       </td>
                     </tr>
                   );
@@ -201,6 +275,43 @@ const UserOrdersPage: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {cancelModalOpen && orderToCancel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full mx-4 p-6 text-gray-800">
+            <h2 className="text-lg font-bold text-gray-900 mb-2">Cancel order?</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Are you sure you want to cancel <span className="font-semibold">Order #{orderToCancel.order_id}</span>?
+              This action cannot be undone.
+            </p>
+
+            {cancelError && (
+              <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                {cancelError}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 mt-2">
+              <button
+                type="button"
+                onClick={handleCloseCancelModal}
+                disabled={cancelling}
+                className="px-4 py-2 rounded-xl border border-gray-200 text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+              >
+                Keep order
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmCancel}
+                disabled={cancelling}
+                className="px-4 py-2 rounded-xl bg-red-600 text-white text-xs sm:text-sm font-semibold hover:bg-red-700 disabled:opacity-60"
+              >
+                {cancelling ? 'Cancelling...' : 'Cancel order'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };
