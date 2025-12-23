@@ -15,6 +15,7 @@ const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))
 const ProductDetails = lazy(() => import('./pages/ProductDetails'))
 const ShoppingCart = lazy(() => import('./pages/ShoppingCart'))
+const UserOrdersPage = lazy(() => import('./pages/UserOrders'))
 
 // Admin pages (lazy loaded)
 const Dashboard = lazy(() => import('./admin/pages/dashboard'))
@@ -82,6 +83,7 @@ function App() {
                           <Route path="/shop" element={<Shop />} />
                           <Route path="/product/:id" element={<ProductDetails />} />
                           <Route path="/cart" element={<ShoppingCart />} />
+                          <Route path="/orders" element={<UserOrdersPage />} />
                         </Routes>
                       </Suspense>
                     </main>
