@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
+import Toast from '../components/Toast';
 
 interface OrderUser {
   id: number;
@@ -61,6 +62,15 @@ const UserOrderDetail: React.FC = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editingItem, setEditingItem] = useState<OrderItem | null>(null);
+  const [editQuantity, setEditQuantity] = useState<number>(1);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [removingItemId, setRemovingItemId] = useState<number | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info' | 'warning';
+  } | null>(null);
 
   const backendOrigin = (() => {
     try {
@@ -187,6 +197,13 @@ const UserOrderDetail: React.FC = () => {
   return (
     <main className="w-full max-w-screen-xl mx-auto px-4 mt-18 sm:px-6 md:px-10 py-8">
       <div className="flex flex-col gap-6">
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
         {/* Header / breadcrumb */}
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
@@ -318,6 +335,43 @@ const UserOrderDetail: React.FC = () => {
                       <div className="flex flex-col items-end gap-1 text-sm">
                         <span className="text-gray-700">{formatMoney(price)}</span>
                         <span className="font-semibold text-gray-900">{formatMoney(subtotal)}</span>
+                        {order.status === 'pending' && (
+                          <div className="flex gap-2 mt-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingItem(item);
+                                setEditQuantity(item.quantity);
+                                setEditError(null);
+                              }}
+                              className="px-2 py-1 rounded-lg border border-gray-200 text-[11px] font-semibold text-gray-700 hover:bg-gray-50"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                if (!order || !item.order_item_id) return;
+                                try {
+                                  setRemovingItemId(item.order_item_id);
+                                  const response = await api.delete(`/orders/${order.order_id}/items/${item.order_item_id}`);
+                                  const payload = response.data.data || response.data;
+                                  const updated: Order = payload.data || payload;
+                                  setOrder(updated);
+                                  setToast({ message: 'Item removed from order.', type: 'success' });
+                                } catch (err: any) {
+                                  console.error('Error removing order item:', err);
+                                } finally {
+                                  setRemovingItemId(null);
+                                }
+                              }}
+                              disabled={removingItemId === item.order_item_id}
+                              className="px-2 py-1 rounded-lg border border-red-200 text-[11px] font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60"
+                            >
+                              {removingItemId === item.order_item_id ? 'Removing...' : 'Delete'}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -327,6 +381,80 @@ const UserOrderDetail: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {editingItem && order && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full mx-4 p-6 text-gray-800">
+            <h2 className="text-lg font-bold text-gray-900 mb-2">Edit item quantity</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              {editingItem.product?.name || `Product #${editingItem.product_id}`}
+            </p>
+
+            {editError && (
+              <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                {editError}
+              </div>
+            )}
+
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+              Quantity
+            </label>
+            <input
+              type="number"
+              min={1}
+              value={editQuantity}
+              onChange={(e) => setEditQuantity(Math.max(1, Number(e.target.value) || 1))}
+              className="w-full mb-4 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 py-2.5 px-3 transition-colors"
+            />
+
+            <div className="flex justify-end gap-3 mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (savingEdit) return;
+                  setEditingItem(null);
+                  setEditError(null);
+                }}
+                disabled={savingEdit}
+                className="px-4 py-2 rounded-xl border border-gray-200 text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!order || !editingItem?.order_item_id) return;
+                  try {
+                    setSavingEdit(true);
+                    setEditError(null);
+                    const response = await api.put(`/orders/${order.order_id}/items/${editingItem.order_item_id}`, {
+                      quantity: editQuantity,
+                    });
+                    const payload = response.data.data || response.data;
+                    const updated: Order = payload.data || payload;
+                    setOrder(updated);
+                    setEditingItem(null);
+                    setToast({ message: 'Item updated successfully.', type: 'success' });
+                  } catch (err: any) {
+                    console.error('Error updating order item quantity:', err);
+                    let message = 'Failed to update item.';
+                    if (err.response?.data?.message) {
+                      message = err.response.data.message;
+                    }
+                    setEditError(message);
+                  } finally {
+                    setSavingEdit(false);
+                  }
+                }}
+                disabled={savingEdit}
+                className="px-4 py-2 rounded-xl bg-gray-900 text-white text-xs sm:text-sm font-semibold hover:bg-orange-500 disabled:opacity-60"
+              >
+                {savingEdit ? 'Saving...' : 'Save changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };
