@@ -1,7 +1,33 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../../utils/api';
+
+interface OrderUser {
+  id: number;
+  name: string;
+  email: string;
+}
+
+interface Order {
+  order_id: number;
+  user_id: number;
+  status: 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled' | string;
+  total_amount: number | string;
+  payment_method: string;
+  created_at?: string;
+  first_name?: string;
+  last_name?: string;
+  user?: OrderUser | null;
+}
 
 const Dashboard: React.FC = () => {
-  // Sample data for the dashboard
+  const navigate = useNavigate();
+
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+
+  // Sample data for the dashboard (kept static for now)
   const stats = [
     { name: 'Total Sales', value: '$12,450.00', change: '+15.3%', changeType: 'positive' },
     { name: 'Active Orders', value: '45', change: '+5.2%', changeType: 'positive' },
@@ -9,12 +35,39 @@ const Dashboard: React.FC = () => {
     { name: 'Total Visitors', value: '1,203', change: '+8.4%', changeType: 'positive' },
   ];
 
-  const recentOrders = [
-    { id: 'ORD001', customer: 'Sarah M.', date: '2 minutes ago', amount: '$125.99', status: 'Completed' },
-    { id: 'ORD002', customer: 'John D.', date: '1 hour ago', amount: '$89.50', status: 'Processing' },
-    { id: 'ORD003', customer: 'Emily R.', date: '3 hours ago', amount: '$210.75', status: 'Completed' },
-    { id: 'ORD004', customer: 'Michael T.', date: '5 hours ago', amount: '$65.25', status: 'Shipped' },
-  ];
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setOrdersLoading(true);
+        setOrdersError(null);
+        const response = await api.get('/orders');
+        const payload = response.data.data || response.data;
+        const data: Order[] = payload.data || payload;
+        setOrders(Array.isArray(data) ? data : []);
+      } catch (error: any) {
+        console.error('Error fetching orders:', error);
+        let message = 'Failed to load orders.';
+        if (error.response?.data?.message) {
+          message = error.response.data.message;
+        }
+        setOrdersError(message);
+      } finally {
+        setOrdersLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  const recentOrders = useMemo(() => {
+    if (!orders || !orders.length) return [] as Order[];
+    const sorted = [...orders].sort((a, b) => {
+      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return bTime - aTime;
+    });
+    return sorted.slice(0, 6);
+  }, [orders]);
 
   const popularProducts = [
     { name: 'Lavender Dream', category: 'Soy Wax, 8oz', status: 'In Stock', price: '$24.00', sold: '1,240' },
@@ -174,50 +227,96 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
         
-        {/* Bottom Section: Popular Products & Activity */}
+        {/* Bottom Section: Recent Orders & Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Popular Products Table */}
+          {/* Recent Orders Table */}
           <div className="lg:col-span-2 bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden flex flex-col">
             <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-lg font-bold text-gray-900">Popular Products</h3>
-              <a className="text-sm font-bold text-orange-500 hover:text-orange-600 transition-colors" href="#">View All</a>
+              <h3 className="text-lg font-bold text-gray-900">Recent Orders</h3>
             </div>
             <div className="overflow-x-auto">
+              {ordersError && (
+                <div className="px-6 py-3 text-sm text-red-600 bg-red-50 border-b border-red-100">
+                  {ordersError}
+                </div>
+              )}
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="text-xs text-gray-500 font-semibold border-b border-gray-100">
-                    <th className="px-6 py-4 uppercase tracking-wider">Product</th>
-                    <th className="px-6 py-4 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 uppercase tracking-wider text-right">Price</th>
-                    <th className="px-6 py-4 uppercase tracking-wider text-right">Sold</th>
+                    <th className="px-6 py-4 uppercase tracking-wider">Order ID</th>
+                    <th className="px-6 py-4 uppercase tracking-wider">Customer</th>
+                    <th className="px-6 py-4 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-4 uppercase tracking-wider text-right">Total</th>
+                    <th className="px-6 py-4 uppercase tracking-wider text-right">Status</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm">
-                  {popularProducts.map((product, index) => (
-                    <tr key={index} className="group hover:bg-gray-50 transition-colors border-b border-gray-100">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-4">
-                          <div className="size-12 rounded-lg bg-cover bg-center bg-gray-100" 
-                               style={{ backgroundImage: `url("https://lh3.googleusercontent.com/aida-public/AB6AXu${index === 0 ? 'Apvx8B6YxK2SzprqzwV3ZUcd4uUM-E3CzPSarnGTqa1GhwsaARYMf9Dvp_jL1NlpdOgdhB3Ge5M8FNy2_9ERtnOKNzCjnvBGFqQj6yDWa4NMivH727RiN2Lc16GwA7U0mxHTfT-r22ax-XzXFl4m4fVAcdrEEtHGCTRqhpII1C0eyI0DcN11DV10JhkuDcTcecth2s1IwLwG2z7788kTPCk-8JlJ7e5bvH3seqz6MsHrqWm2dEcfmtBZYeRloJ4j_cBBvjfg_hBtEX' : index === 1 ? 'uC8dKD-q9r-4As_tfWAGrdkcAD3qXtInC5buyNpWLpz6pn5xQdvjisu4JwwTteEsa1d3dwlONifszuPBBOS6GAOWIBSGBQ3gMRYleb1RrjSZ-ZJaHZkcqogkPBCgQepfvyjH3hciL_Q-r2hIoR_kHBOTnqhlgWIyvumGZK5NpN6jD7EZ7Fcvb5Jw7xUmaa7wzT581YusTCxLHrUSbkZ8QDDN8jGROwQwyRGsNR-mB5HTvn_Zl1Q8kKw-M8-vrGEi20VKv32Jwq84dFA' : 'Ag4hAZjNPibDhbgWrzv4Y0ztmQR_C8FPP6SP8xLzjhaMWLvz7_ByF84SXtoK-fFMMHW4n3l4el_402Yjv5cSD-099nVBG2pshK9schph0VIqYVd1Ajkca9Ym-w2WYCM-IowxTCFcQkdD5phx_54GTx1uAlyJH5FPKm32hpWXac2SBNaLyHh-ZNDC2i413w5VlNubWAdDM74EWISLZGj87u-UAEBT49oehUW66EzD0p1wnZr8sRbKRfAPxxeiOvqgP0VE84pFYlAbA9'}")` }}></div>
-                          <div>
-                            <p className="font-bold text-gray-900">{product.name}</p>
-                            <p className="text-xs text-gray-500">{product.category}</p>
-                          </div>
-                        </div>
+                  {ordersLoading ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-6 text-center text-gray-500">
+                        Loading orders...
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                          product.status === 'In Stock' ? 
-                          'bg-green-100 text-green-700' : 
-                          'bg-yellow-100 text-yellow-700'
-                        }`}>
-                          {product.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right font-medium text-gray-900">{product.price}</td>
-                      <td className="px-6 py-4 text-right text-gray-500">{product.sold}</td>
                     </tr>
-                  ))}
+                  ) : recentOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-6 text-center text-gray-500">
+                        No orders found.
+                      </td>
+                    </tr>
+                  ) : (
+                    recentOrders.map((order) => {
+                      const customerName = order.first_name || order.last_name
+                        ? `${order.first_name || ''} ${order.last_name || ''}`.trim()
+                        : order.user?.name || `User #${order.user_id}`;
+
+                      const createdAt = order.created_at
+                        ? new Date(order.created_at).toLocaleString()
+                        : '-';
+
+                      const total = typeof order.total_amount === 'string'
+                        ? Number(order.total_amount)
+                        : Number(order.total_amount || 0);
+
+                      const statusClass =
+                        order.status === 'pending'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : order.status === 'paid'
+                          ? 'bg-blue-100 text-blue-700'
+                          : order.status === 'shipped'
+                          ? 'bg-indigo-100 text-indigo-700'
+                          : order.status === 'delivered'
+                          ? 'bg-green-100 text-green-700'
+                          : order.status === 'cancelled'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-gray-100 text-gray-700';
+
+                      return (
+                        <tr
+                          key={order.order_id}
+                          className="group hover:bg-gray-50 transition-colors border-b border-gray-100 cursor-pointer"
+                          onClick={() => navigate(`/admin/orders/${order.order_id}`)}
+                        >
+                          <td className="px-6 py-4 font-medium text-gray-900">
+                            #{order.order_id}
+                          </td>
+                          <td className="px-6 py-4 text-gray-800">
+                            {customerName}
+                          </td>
+                          <td className="px-6 py-4 text-gray-500 text-sm">
+                            {createdAt}
+                          </td>
+                          <td className="px-6 py-4 text-right font-semibold text-gray-900">
+                            ${total.toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold ${statusClass}`}>
+                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
