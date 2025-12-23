@@ -240,8 +240,7 @@ const ShoppingCart: React.FC = () => {
         phone: shippingForm.phone,
       };
 
-      const response = await api.post('/orders', payload);
-      const data = response.data?.data || response.data;
+      await api.post('/orders', payload);
 
       setCart({ cart_id: cart.cart_id, user_id: cart.user_id, items: [] });
       setCartFromApiPayload({ data: { ...cart, items: [] } });
@@ -250,7 +249,7 @@ const ShoppingCart: React.FC = () => {
       setToast({ message: 'Order placed successfully!', type: 'success' });
 
       window.setTimeout(() => {
-        navigate(`/orders/${data.order_id}`);
+        navigate('/orders');
       }, 1500);
     } catch (err: any) {
       let message = 'Failed to place order.';
@@ -506,6 +505,18 @@ const ShoppingCart: React.FC = () => {
           </aside>
         </div>
       )}
+
+      {/* Simple link so user can navigate to their orders page */}
+      <div className="mt-10 flex justify-center">
+        <Link
+          to="/orders"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+        >
+          <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+          View your orders
+        </Link>
+      </div>
+
       {isShippingModalOpen && (
         <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-[2rem] p-6 md:p-8 w-full max-w-2xl mx-4 shadow-xl relative text-gray-800">
