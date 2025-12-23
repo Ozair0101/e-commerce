@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+import Toast from '../components/Toast';
 
 interface ProductImage {
   id: number;
@@ -45,6 +46,10 @@ const Shop: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [maxPriceFilter, setMaxPriceFilter] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info' | 'warning';
+  } | null>(null);
 
   const backendOrigin = useMemo(() => {
     try {
@@ -107,8 +112,10 @@ const Shop: React.FC = () => {
         quantity: 1,
       });
       setCartFromApiPayload(response.data);
+      setToast({ message: 'Product added to your cart.', type: 'success' });
     } catch (err) {
       console.error('Error adding item to cart:', err);
+      setToast({ message: 'Failed to add product to cart.', type: 'error' });
     }
   };
 
@@ -253,6 +260,14 @@ const Shop: React.FC = () => {
 
   return (
     <main className="w-full max-w-screen-xl mx-auto px-4 mt-18 sm:px-6 md:px-10 py-5">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
       {/* Breadcrumbs */}
       <div className="flex flex-wrap gap-2 py-4">
         <Link className="text-gray-500 hover:text-orange-500 text-sm font-medium leading-normal" to="/">
