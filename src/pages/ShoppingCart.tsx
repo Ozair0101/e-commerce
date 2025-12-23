@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+
 import { Link, useNavigate } from 'react-router-dom';
 
 import api from '../utils/api';
@@ -43,6 +44,19 @@ const ShoppingCart: React.FC = () => {
   const [updatingItemId, setUpdatingItemId] = useState<number | null>(null);
   const [removingItemId, setRemovingItemId] = useState<number | null>(null);
   const [clearing, setClearing] = useState<boolean>(false);
+  const [isShippingModalOpen, setIsShippingModalOpen] = useState<boolean>(false);
+  const [submittingOrder, setSubmittingOrder] = useState<boolean>(false);
+  const [shippingError, setShippingError] = useState<string | null>(null);
+  const [shippingForm, setShippingForm] = useState({
+    email: user?.email || '',
+    first_name: user?.name?.split(' ')[0] || '',
+    last_name: user?.name?.split(' ').slice(1).join(' ') || '',
+    address: '',
+    city: '',
+    state: '',
+    zip_code: '',
+    phone: '',
+  });
 
   const backendOrigin = useMemo(() => {
     try {
@@ -173,6 +187,65 @@ const ShoppingCart: React.FC = () => {
       console.error('Error clearing cart:', err);
     } finally {
       setClearing(false);
+    }
+  };
+
+  const handleProceedToCheckoutClick = () => {
+    if (!items.length || !cart) return;
+    setShippingError(null);
+    setIsShippingModalOpen(true);
+  };
+
+  const handleShippingInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setShippingForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmitShipping = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !cart || !items.length) return;
+
+    try {
+      setSubmittingOrder(true);
+      setShippingError(null);
+
+      const orderItems = items.map((item) => ({
+        product_id: item.product_id,
+        variant_id: null,
+        quantity: item.quantity,
+      }));
+
+      const payload = {
+        user_id: user.id,
+        payment_method: 'cod',
+        items: orderItems,
+        from_cart_id: cart.cart_id,
+        email: shippingForm.email,
+        first_name: shippingForm.first_name,
+        last_name: shippingForm.last_name,
+        address: shippingForm.address,
+        city: shippingForm.city,
+        state: shippingForm.state,
+        zip_code: shippingForm.zip_code,
+        phone: shippingForm.phone,
+      };
+
+      const response = await api.post('/orders', payload);
+      const data = response.data?.data || response.data;
+
+      setCart({ cart_id: cart.cart_id, user_id: cart.user_id, items: [] });
+      setCartFromApiPayload({ data: { ...cart, items: [] } });
+
+      setIsShippingModalOpen(false);
+      navigate(`/orders/${data.order_id}`);
+    } catch (err: any) {
+      let message = 'Failed to place order.';
+      if (err.response?.data?.message) {
+        message = err.response.data.message;
+      }
+      setShippingError(message);
+    } finally {
+      setSubmittingOrder(false);
     }
   };
 
@@ -393,6 +466,7 @@ const ShoppingCart: React.FC = () => {
 
             <button
               type="button"
+              onClick={handleProceedToCheckoutClick}
               className="w-full h-11 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-orange-500 transition-colors flex items-center justify-center gap-2 mb-3"
             >
               <span className="material-symbols-outlined text-[18px]">lock</span>
@@ -408,6 +482,171 @@ const ShoppingCart: React.FC = () => {
               Continue Shopping
             </button>
           </aside>
+        </div>
+      )}
+      {isShippingModalOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40">
+          <div className="bg-white dark:bg-[#020617] rounded-[2rem] p-6 md:p-8 w-full max-w-2xl mx-4 shadow-xl relative">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                  1
+                </div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Shipping Information</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsShippingModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {shippingError && (
+              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {shippingError}
+              </div>
+            )}
+
+            <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={handleSubmitShipping}>
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+                  Email Address
+                </label>
+                <input
+                  className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-black/20 text-slate-900 dark:text-white text-sm focus:ring-primary focus:border-primary py-3"
+                  placeholder="you@example.com"
+                  type="email"
+                  name="email"
+                  value={shippingForm.email}
+                  onChange={handleShippingInputChange}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+                  First Name
+                </label>
+                <input
+                  className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-black/20 text-slate-900 dark:text-white text-sm focus:ring-primary focus:border-primary py-3"
+                  placeholder="First Name"
+                  type="text"
+                  name="first_name"
+                  value={shippingForm.first_name}
+                  onChange={handleShippingInputChange}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+                  Last Name
+                </label>
+                <input
+                  className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-black/20 text-slate-900 dark:text-white text-sm focus:ring-primary focus:border-primary py-3"
+                  placeholder="Last Name"
+                  type="text"
+                  name="last_name"
+                  value={shippingForm.last_name}
+                  onChange={handleShippingInputChange}
+                  required
+                />
+              </div>
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+                  Address
+                </label>
+                <input
+                  className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-black/20 text-slate-900 dark:text-white text-sm focus:ring-primary focus:border-primary py-3"
+                  placeholder="Street Address, Apt, Suite, etc."
+                  type="text"
+                  name="address"
+                  value={shippingForm.address}
+                  onChange={handleShippingInputChange}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+                  City
+                </label>
+                <input
+                  className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-black/20 text-slate-900 dark:text-white text-sm focus:ring-primary focus:border-primary py-3"
+                  placeholder="City"
+                  type="text"
+                  name="city"
+                  value={shippingForm.city}
+                  onChange={handleShippingInputChange}
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+                    State
+                  </label>
+                  <select
+                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-black/20 text-slate-900 dark:text-white text-sm focus:ring-primary focus:border-primary py-3"
+                    name="state"
+                    value={shippingForm.state}
+                    onChange={handleShippingInputChange}
+                    required
+                  >
+                    <option value="">Select...</option>
+                    <option value="CA">CA</option>
+                    <option value="NY">NY</option>
+                    <option value="TX">TX</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+                    ZIP Code
+                  </label>
+                  <input
+                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-black/20 text-slate-900 dark:text-white text-sm focus:ring-primary focus:border-primary py-3"
+                    placeholder="12345"
+                    type="text"
+                    name="zip_code"
+                    value={shippingForm.zip_code}
+                    onChange={handleShippingInputChange}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+                  Phone Number
+                </label>
+                <input
+                  className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-black/20 text-slate-900 dark:text-white text-sm focus:ring-primary focus:border-primary py-3"
+                  placeholder="(555) 123-4567"
+                  type="tel"
+                  name="phone"
+                  value={shippingForm.phone}
+                  onChange={handleShippingInputChange}
+                  required
+                />
+              </div>
+
+              <div className="col-span-1 md:col-span-2 flex justify-end gap-3 mt-2">
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                  onClick={() => setIsShippingModalOpen(false)}
+                  disabled={submittingOrder}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-orange-500 disabled:opacity-60"
+                  disabled={submittingOrder}
+                >
+                  {submittingOrder ? 'Placing order...' : 'Place Order'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </main>
