@@ -24,6 +24,8 @@ const OrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled'>('all');
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [statusOrder, setStatusOrder] = useState<Order | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
@@ -99,6 +101,33 @@ const OrdersPage: React.FC = () => {
     });
   }, [orders]);
 
+  const filteredOrders = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return sortedOrders.filter((order) => {
+      // Status filter
+      if (statusFilter !== 'all' && order.status !== statusFilter) {
+        return false;
+      }
+
+      if (!term) return true;
+
+      const customerName = order.first_name || order.last_name
+        ? `${order.first_name || ''} ${order.last_name || ''}`.trim()
+        : order.user?.name || `User #${order.user_id}`;
+
+      const haystack = [
+        String(order.order_id),
+        customerName,
+        order.user?.email || '',
+        order.status,
+      ]
+        .join(' ')
+        .toLowerCase();
+
+      return haystack.includes(term);
+    });
+  }, [sortedOrders, searchTerm, statusFilter]);
+
   const getPaymentLabel = (method: string) => {
     const normalized = method.toLowerCase();
     if (normalized === 'cod') return 'Cash on Delivery';
@@ -110,10 +139,37 @@ const OrdersPage: React.FC = () => {
   return (
     <div className="p-6 md:p-8 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto flex flex-col gap-6">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
             <p className="text-sm text-gray-600 mt-1">View and manage all customer orders.</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+            <div className="flex-1 sm:flex-none">
+              <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by order, customer, email, status"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:border-orange-500"
+              />
+            </div>
+            <div className="sm:w-44">
+              <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:border-orange-500"
+              >
+                <option value="all">All statuses</option>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -142,14 +198,14 @@ const OrdersPage: React.FC = () => {
                       Loading orders...
                     </td>
                   </tr>
-                ) : sortedOrders.length === 0 ? (
+                ) : filteredOrders.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                       No orders found.
                     </td>
                   </tr>
                 ) : (
-                  sortedOrders.map((order) => {
+                  filteredOrders.map((order) => {
                     const customerName = order.first_name || order.last_name
                       ? `${order.first_name || ''} ${order.last_name || ''}`.trim()
                       : order.user?.name || `User #${order.user_id}`;
