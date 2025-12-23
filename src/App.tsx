@@ -27,6 +27,7 @@ const CategoryList = lazy(() => import('./admin/pages/CategoryList'))
 const AddCategory = lazy(() => import('./admin/pages/AddCategory'))
 const OrdersPage = lazy(() => import('./admin/pages/Orders'))
 const OrderDetailPage = lazy(() => import('./admin/pages/OrderDetail'))
+const CustomersPage = lazy(() => import('./admin/pages/Customers'))
 const AdminLayout = lazy(() => import('./admin/AdminLayout'))
 
 function App() {
@@ -64,6 +65,7 @@ function App() {
                   <Route path="add-product" element={<AddProductPage />} />
                   <Route path="categories" element={<CategoryList />} />
                   <Route path="add-category" element={<AddCategory />} />
+                  <Route path="customers" element={<CustomersPage />} />
                 </Route>
                 
                 {/* Main Site Routes */}
