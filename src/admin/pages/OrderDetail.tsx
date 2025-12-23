@@ -60,6 +60,15 @@ const OrderDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const backendOrigin = (() => {
+    try {
+      const base = (api.defaults.baseURL as string) || '';
+      return base ? new URL(base).origin : window.location.origin;
+    } catch {
+      return window.location.origin;
+    }
+  })();
+
   useEffect(() => {
     const fetchOrder = async () => {
       if (!orderId) return;
@@ -84,6 +93,33 @@ const OrderDetailPage: React.FC = () => {
 
     fetchOrder();
   }, [orderId]);
+
+  const resolveImageUrl = (url: string | undefined) => {
+    if (!url) return '';
+
+    // Handle absolute URLs
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      try {
+        const parsed = new URL(url);
+        const backend = new URL(backendOrigin);
+
+        const isLocalhost = parsed.hostname === 'localhost';
+        const hasNoPort = !parsed.port;
+        const backendHasPort = !!backend.port;
+
+        if (isLocalhost && hasNoPort && backendHasPort) {
+          return `${backendOrigin}${parsed.pathname}${parsed.search}${parsed.hash}`;
+        }
+
+        return url;
+      } catch {
+        return url;
+      }
+    }
+
+    // Relative URL: prepend backend origin (includes correct port)
+    return `${backendOrigin}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
 
   const formatMoney = (value: number | string | undefined) => {
     const n = typeof value === 'string' ? Number(value) : Number(value || 0);
@@ -262,15 +298,21 @@ const OrderDetailPage: React.FC = () => {
                         : Number(item.price_at_purchase || 0);
                       const subtotal = price * item.quantity;
 
+                      const primaryImage =
+                        product && product.images && product.images.length > 0
+                          ? product.images.find((img) => img.is_primary) || product.images[0]
+                          : undefined;
+                      const imageUrl = resolveImageUrl(primaryImage?.url);
+
                       return (
                         <tr key={item.order_item_id || `${item.order_id}-${item.product_id}`} className="border-b border-gray-100 last:border-b-0">
                           <td className="px-5 py-3">
                             <div className="flex items-center gap-3">
                               <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center">
-                                {product && product.images && product.images.length > 0 ? (
+                                {imageUrl ? (
                                   <img
-                                    src={product.images[0].url}
-                                    alt={product.name}
+                                    src={imageUrl}
+                                    alt={product?.name || `Product #${item.product_id}`}
                                     className="w-full h-full object-cover"
                                   />
                                 ) : (
