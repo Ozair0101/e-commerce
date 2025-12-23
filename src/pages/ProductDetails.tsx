@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import api from '../utils/api'
 import { useAuth } from '../contexts/AuthContext'
 import { useCart } from '../contexts/CartContext'
+import Toast from '../components/Toast'
 
 interface ProductImage {
   id: number
@@ -58,6 +59,10 @@ const ProductDetail: React.FC = () => {
   const [reviewComment, setReviewComment] = useState<string>('')
   const [reviewRating, setReviewRating] = useState<number>(5)
   const [submittingReview, setSubmittingReview] = useState<boolean>(false)
+  const [toast, setToast] = useState<{
+    message: string
+    type: 'success' | 'error' | 'info' | 'warning'
+  } | null>(null)
 
   const backendOrigin = useMemo(() => {
     try {
@@ -196,8 +201,10 @@ const ProductDetail: React.FC = () => {
         quantity,
       })
       setCartFromApiPayload(response.data)
+      setToast({ message: 'Product added to your cart.', type: 'success' })
     } catch (err) {
       console.error('Error adding item to cart:', err)
+      setToast({ message: 'Failed to add product to cart.', type: 'error' })
     }
   }
 
@@ -287,6 +294,13 @@ const ProductDetail: React.FC = () => {
 
   return (
     <div className="bg-white text-gray-800 mt-18 min-h-screen flex flex-col">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
       <main className="flex-grow py-8 md:py-12">
         <div className="max-w-[1280px] mx-auto px-4 md:px-8">
           <nav className="flex items-center text-sm text-gray-500 mb-8 overflow-x-auto whitespace-nowrap">
