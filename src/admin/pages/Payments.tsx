@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import api from '../../utils/api';
+import Toast from '../../components/Toast';
 
 interface PaymentOrderUser {
   id: number;
@@ -12,6 +13,21 @@ interface PaymentOrder {
   user?: PaymentOrderUser | null;
 }
 
+/**
+ * Payment model used in the admin Payments page.
+ *
+ * Payment lifecycle (standardized across the app):
+ * - pending  : created when an order is placed (e.g. COD orders at creation time).
+ * - success  : set when the payment is completed (e.g. COD orders when marked as delivered).
+ * - failed   : set when payment cannot be completed or an order is cancelled before payment.
+ * - refunded : set only via the admin refund endpoint; also cancels the related order.
+ *
+ * For COD orders specifically:
+ * - OrderController@store creates a pending payment when the order is created.
+ * - When an order status is set to delivered, its COD payment becomes success (or is created as success).
+ * - When an order is cancelled, its COD payment becomes failed (or is created as failed).
+ * - When an admin refunds a successful payment, PaymentController@refund marks it refunded and cancels the order.
+ */
 interface Payment {
   payment_id: number;
   order_id: number;
@@ -31,6 +47,14 @@ const PaymentsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'success' | 'failed' | 'refunded'>('all');
   const [refundingId, setRefundingId] = useState<number | null>(null);
   const [refundError, setRefundError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info' | 'warning';
+    onConfirm?: () => void;
+    onCancel?: () => void;
+    confirmLabel?: string;
+    cancelLabel?: string;
+  } | null>(null);
 
   useEffect(() => {
     const fetchPayments = async () => {
@@ -118,39 +142,69 @@ const PaymentsPage: React.FC = () => {
     return provider;
   };
 
+  const closeToast = () => {
+    setToast(null);
+  };
+
   const handleRefund = async (payment: Payment) => {
     if (payment.status !== 'success') return;
+    // Show confirmation using Toast with confirm/cancel actions
+    setToast({
+      message: `Refund payment #${payment.payment_id} for order #${payment.order_id}?`,
+      type: 'warning',
+      confirmLabel: 'Refund',
+      cancelLabel: 'Cancel',
+      onCancel: () => {
+        closeToast();
+      },
+      onConfirm: async () => {
+        closeToast();
+        try {
+          setRefundingId(payment.payment_id);
+          setRefundError(null);
 
-    const confirm = window.confirm(
-      `Are you sure you want to refund payment #${payment.payment_id} for order #${payment.order_id}?`
-    );
-    if (!confirm) return;
+          const response = await api.post(`/payments/${payment.payment_id}/refund`);
+          const payload = response.data.data || response.data;
+          const updated: Payment = payload.data || payload;
 
-    try {
-      setRefundingId(payment.payment_id);
-      setRefundError(null);
-
-      const response = await api.post(`/payments/${payment.payment_id}/refund`);
-      const payload = response.data.data || response.data;
-      const updated: Payment = payload.data || payload;
-
-      setPayments((prev) => prev.map((p) => (p.payment_id === updated.payment_id ? updated : p)));
-    } catch (err: any) {
-      console.error('Error refunding payment:', err);
-      let message = 'Failed to refund payment.';
-      if (err.response?.data?.message) {
-        message = err.response.data.message;
-      }
-      setRefundError(message);
-    } finally {
-      setRefundingId(null);
-    }
+          setPayments((prev) => prev.map((p) => (p.payment_id === updated.payment_id ? updated : p)));
+          setToast({
+            message: `Payment #${updated.payment_id} has been refunded and the order was cancelled.`,
+            type: 'success',
+          });
+        } catch (err: any) {
+          console.error('Error refunding payment:', err);
+          let message = 'Failed to refund payment.';
+          if (err.response?.data?.message) {
+            message = err.response.data.message;
+          }
+          setRefundError(message);
+          setToast({
+            message,
+            type: 'error',
+          });
+        } finally {
+          setRefundingId(null);
+        }
+      },
+    });
   };
 
   return (
     <div className="min-h-full bg-gray-50">
       <div className="mx-auto px-6 py-8">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+          {toast && (
+            <Toast
+              message={toast.message}
+              type={toast.type}
+              onClose={closeToast}
+              onConfirm={toast.onConfirm}
+              onCancel={toast.onCancel}
+              confirmLabel={toast.confirmLabel}
+              cancelLabel={toast.cancelLabel}
+            />
+          )}
           <div className="px-6 py-4 border-b border-gray-100 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h1 className="text-lg font-semibold text-gray-900">Payments</h1>
