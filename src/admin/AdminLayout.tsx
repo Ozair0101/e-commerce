@@ -21,8 +21,8 @@ const AdminLayout: React.FC = () => {
     { name: 'Categories', href: '/admin/categories', icon: 'category' },
     { name: 'Products', href: '/admin/products', icon: 'inventory_2' },
     { name: 'Orders', href: '/admin/orders', icon: 'shopping_bag' },
-    { name: 'Customers', href: '/admin/customers', icon: 'group' },
     { name: 'Payments', href: '/admin/payments', icon: 'credit_card' },
+    { name: 'Customers', href: '/admin/customers', icon: 'group' },
     { name: 'Analytics', href: '#', icon: 'bar_chart' },
   ];
 

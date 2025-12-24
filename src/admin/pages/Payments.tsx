@@ -29,6 +29,8 @@ const PaymentsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'success' | 'failed' | 'refunded'>('all');
+  const [refundingId, setRefundingId] = useState<number | null>(null);
+  const [refundError, setRefundError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPayments = async () => {
@@ -116,6 +118,35 @@ const PaymentsPage: React.FC = () => {
     return provider;
   };
 
+  const handleRefund = async (payment: Payment) => {
+    if (payment.status !== 'success') return;
+
+    const confirm = window.confirm(
+      `Are you sure you want to refund payment #${payment.payment_id} for order #${payment.order_id}?`
+    );
+    if (!confirm) return;
+
+    try {
+      setRefundingId(payment.payment_id);
+      setRefundError(null);
+
+      const response = await api.post(`/payments/${payment.payment_id}/refund`);
+      const payload = response.data.data || response.data;
+      const updated: Payment = payload.data || payload;
+
+      setPayments((prev) => prev.map((p) => (p.payment_id === updated.payment_id ? updated : p)));
+    } catch (err: any) {
+      console.error('Error refunding payment:', err);
+      let message = 'Failed to refund payment.';
+      if (err.response?.data?.message) {
+        message = err.response.data.message;
+      }
+      setRefundError(message);
+    } finally {
+      setRefundingId(null);
+    }
+  };
+
   return (
     <div className="min-h-full bg-gray-50">
       <div className="mx-auto px-6 py-8">
@@ -166,6 +197,12 @@ const PaymentsPage: React.FC = () => {
               </div>
             )}
 
+            {refundError && !loading && (
+              <div className="mt-3 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-700">
+                {refundError}
+              </div>
+            )}
+
             {!loading && !error && filteredPayments.length === 0 && (
               <div className="rounded-lg bg-gray-50 border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500">
                 No payments found.
@@ -184,6 +221,7 @@ const PaymentsPage: React.FC = () => {
                       <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Amount</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Status</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Date</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-100">
@@ -213,6 +251,20 @@ const PaymentsPage: React.FC = () => {
                             </span>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-gray-500 text-xs">{createdAt}</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-right">
+                            {payment.status === 'success' ? (
+                              <button
+                                type="button"
+                                onClick={() => handleRefund(payment)}
+                                disabled={refundingId === payment.payment_id}
+                                className="inline-flex items-center rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                              >
+                                {refundingId === payment.payment_id ? 'Refunding...' : 'Refund'}
+                              </button>
+                            ) : (
+                              <span className="text-xs text-gray-400">-</span>
+                            )}
+                          </td>
                         </tr>
                       );
                     })}
