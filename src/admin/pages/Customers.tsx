@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import api from '../../utils/api';
 
 interface Customer {
@@ -13,6 +13,7 @@ const CustomersPage: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -38,14 +39,41 @@ const CustomersPage: React.FC = () => {
     fetchCustomers();
   }, []);
 
+  const filteredCustomers = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return customers;
+
+    return customers.filter((customer) => {
+      const haystack = [
+        String(customer.id),
+        customer.name,
+        customer.email,
+      ]
+        .join(' ')
+        .toLowerCase();
+
+      return haystack.includes(term);
+    });
+  }, [customers, searchTerm]);
+
   return (
     <div className="min-h-full bg-gray-50">
       <div className="mx-auto px-6 py-8">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-4">
             <div>
               <h1 className="text-lg font-semibold text-gray-900">Customers</h1>
               <p className="text-sm text-gray-500 mt-0.5">Manage all registered customers</p>
+            </div>
+            <div className="w-56">
+              <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by name, email, ID"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:border-orange-500"
+              />
             </div>
           </div>
 
@@ -62,13 +90,13 @@ const CustomersPage: React.FC = () => {
               </div>
             )}
 
-            {!loading && !error && customers.length === 0 && (
+            {!loading && !error && filteredCustomers.length === 0 && (
               <div className="rounded-lg bg-gray-50 border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500">
                 No customers found.
               </div>
             )}
 
-            {!loading && !error && customers.length > 0 && (
+            {!loading && !error && filteredCustomers.length > 0 && (
               <div className="overflow-x-auto -mx-4 sm:mx-0">
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-gray-50">
@@ -81,7 +109,7 @@ const CustomersPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-100">
-                    {customers.map((customer) => (
+                    {filteredCustomers.map((customer) => (
                       <tr key={customer.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 whitespace-nowrap text-gray-900 font-medium">#{customer.id}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-gray-900">{customer.name}</td>
