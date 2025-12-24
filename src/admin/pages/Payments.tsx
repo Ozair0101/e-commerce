@@ -27,6 +27,8 @@ const PaymentsPage: React.FC = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'success' | 'failed' | 'refunded'>('all');
 
   useEffect(() => {
     const fetchPayments = async () => {
@@ -61,6 +63,35 @@ const PaymentsPage: React.FC = () => {
     });
   }, [payments]);
 
+  const filteredPayments = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+
+    return sortedPayments.filter((payment) => {
+      // Status filter
+      if (statusFilter !== 'all' && payment.status !== statusFilter) {
+        return false;
+      }
+
+      if (!term) return true;
+
+      const customerName = payment.order?.user?.name || '';
+      const customerEmail = payment.order?.user?.email || '';
+
+      const haystack = [
+        String(payment.payment_id),
+        String(payment.order_id),
+        customerName,
+        customerEmail,
+        payment.status,
+        payment.payment_provider || '',
+      ]
+        .join(' ')
+        .toLowerCase();
+
+      return haystack.includes(term);
+    });
+  }, [sortedPayments, searchTerm, statusFilter]);
+
   const formatStatus = (status: string) => {
     switch (status) {
       case 'pending':
@@ -89,10 +120,36 @@ const PaymentsPage: React.FC = () => {
     <div className="min-h-full bg-gray-50">
       <div className="mx-auto px-6 py-8">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-gray-100 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h1 className="text-lg font-semibold text-gray-900">Payments</h1>
               <p className="text-sm text-gray-500 mt-0.5">Review all order payments, latest first.</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+              <div className="flex-1 sm:flex-none">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search by payment, order, customer, email"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:border-orange-500"
+                />
+              </div>
+              <div className="sm:w-40">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as any)}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:border-orange-500"
+                >
+                  <option value="all">All statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="success">Success</option>
+                  <option value="failed">Failed</option>
+                  <option value="refunded">Refunded</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -109,13 +166,13 @@ const PaymentsPage: React.FC = () => {
               </div>
             )}
 
-            {!loading && !error && sortedPayments.length === 0 && (
+            {!loading && !error && filteredPayments.length === 0 && (
               <div className="rounded-lg bg-gray-50 border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500">
                 No payments found.
               </div>
             )}
 
-            {!loading && !error && sortedPayments.length > 0 && (
+            {!loading && !error && filteredPayments.length > 0 && (
               <div className="overflow-x-auto -mx-4 sm:mx-0">
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-gray-50">
@@ -130,7 +187,7 @@ const PaymentsPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-100">
-                    {sortedPayments.map((payment) => {
+                    {filteredPayments.map((payment) => {
                       const statusMeta = formatStatus(payment.status);
                       const amount = typeof payment.amount === 'string'
                         ? Number(payment.amount)
