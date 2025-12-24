@@ -164,8 +164,6 @@ const OrdersPage: React.FC = () => {
               >
                 <option value="all">All statuses</option>
                 <option value="pending">Pending</option>
-                <option value="paid">Paid</option>
-                <option value="shipped">Shipped</option>
                 <option value="delivered">Delivered</option>
                 <option value="cancelled">Cancelled</option>
               </select>
@@ -221,10 +219,6 @@ const OrdersPage: React.FC = () => {
                     const statusClass =
                       order.status === 'pending'
                         ? 'bg-yellow-100 text-yellow-700'
-                        : order.status === 'paid'
-                        ? 'bg-blue-100 text-blue-700'
-                        : order.status === 'shipped'
-                        ? 'bg-indigo-100 text-indigo-700'
                         : order.status === 'delivered'
                         ? 'bg-green-100 text-green-700'
                         : order.status === 'cancelled'
