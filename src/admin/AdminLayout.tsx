@@ -22,6 +22,7 @@ const AdminLayout: React.FC = () => {
     { name: 'Products', href: '/admin/products', icon: 'inventory_2' },
     { name: 'Orders', href: '/admin/orders', icon: 'shopping_bag' },
     { name: 'Customers', href: '/admin/customers', icon: 'group' },
+    { name: 'Payments', href: '/admin/payments', icon: 'credit_card' },
     { name: 'Analytics', href: '#', icon: 'bar_chart' },
   ];
 
@@ -94,6 +95,7 @@ const AdminLayout: React.FC = () => {
               {location.pathname.includes('add-product') && 'Add Product'}
               {location.pathname.includes('orders') && 'Orders'}
               {location.pathname.includes('customers') && 'Customers'}
+              {location.pathname.includes('payments') && 'Payments'}
               {location.pathname.includes('dashboard') && 'Dashboard'}
             </h2>
           </div>
