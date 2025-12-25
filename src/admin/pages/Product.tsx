@@ -170,7 +170,7 @@ const ProductPage: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto">
+      <div className="mx-auto">
 
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Products</h1>
