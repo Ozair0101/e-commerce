@@ -109,7 +109,7 @@ const CategoryList: React.FC = () => {
         />
       )}
       
-      <div className="max-w-7xl mx-auto">
+      <div className="mx-auto">
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Categories</h1>
           <p className="text-gray-600 mt-1">Manage product categories</p>
