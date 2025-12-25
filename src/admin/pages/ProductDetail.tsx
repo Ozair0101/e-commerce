@@ -28,6 +28,14 @@ interface Product {
   images?: ProductImage[];
 }
 
+interface ProductReview {
+  id: number;
+  name: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+}
+
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -39,6 +47,9 @@ const ProductDetailPage: React.FC = () => {
     message: string;
     type: 'success' | 'error' | 'info' | 'warning';
   } | null>(null);
+  const [reviews, setReviews] = useState<ProductReview[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState<boolean>(false);
+  const [deletingReviewId, setDeletingReviewId] = useState<number | null>(null);
 
   const backendOrigin = (() => {
     try {
@@ -110,6 +121,30 @@ const ProductDetailPage: React.FC = () => {
     }
   }, [id]);
 
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!id) return;
+      try {
+        setReviewsLoading(true);
+        const response = await api.get(`/products/${id}/reviews`, {
+          params: { per_page: 100 },
+        });
+
+        const payload = response.data.data || response.data;
+        const data: ProductReview[] = payload.data || payload;
+        setReviews(data || []);
+      } catch (error) {
+        console.error('Error fetching product reviews:', error);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchReviews();
+    }
+  }, [id]);
+
   const closeToast = () => {
     setToast(null);
   };
@@ -126,6 +161,25 @@ const ProductDetailPage: React.FC = () => {
     if (p.stock_quantity === 0) return 'bg-red-100 text-red-800';
     if (p.stock_quantity < 10) return 'bg-yellow-100 text-yellow-800';
     return 'bg-green-100 text-green-800';
+  };
+
+  const handleDeleteReview = async (reviewId: number) => {
+    if (!id) return;
+    try {
+      setDeletingReviewId(reviewId);
+      await api.delete(`/products/${id}/reviews/${reviewId}`);
+      setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+      setToast({ message: 'Review deleted successfully', type: 'success' });
+    } catch (error: any) {
+      console.error('Error deleting review:', error);
+      let message = 'Failed to delete review';
+      if (error.response?.data?.message) {
+        message = error.response.data.message;
+      }
+      setToast({ message, type: 'error' });
+    } finally {
+      setDeletingReviewId(null);
+    }
   };
 
   return (
@@ -289,7 +343,7 @@ const ProductDetailPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Right side: pricing, inventory, shipping */}
+            {/* Right side: pricing, inventory, shipping, reviews */}
             <div className="flex flex-col gap-6">
               {/* Pricing */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col gap-4">
@@ -364,6 +418,93 @@ const ProductDetailPage: React.FC = () => {
                 <p className="text-gray-500 text-xs">
                   Shipping details are not configured yet for this product.
                 </p>
+              </div>
+
+              {/* Product reviews */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col gap-4 text-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">Customer reviews</h2>
+                  {reviewsLoading ? (
+                    <span className="text-xs text-gray-500">Loading...</span>
+                  ) : (
+                    <span className="text-xs text-gray-500">
+                      {reviews.length === 0 ? 'No reviews yet' : `${reviews.length} review${reviews.length > 1 ? 's' : ''}`}
+                    </span>
+                  )}
+                </div>
+
+                {reviews.length === 0 && !reviewsLoading && (
+                  <p className="text-xs text-gray-500">There are no reviews for this product yet.</p>
+                )}
+
+                <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                  {reviews.map((review) => {
+                    const initials = review.name
+                      .split(' ')
+                      .filter((p) => p.length > 0)
+                      .slice(0, 2)
+                      .map((p) => p[0].toUpperCase())
+                      .join('') || 'U';
+
+                    const created = new Date(review.created_at);
+                    const createdLabel = Number.isNaN(created.getTime())
+                      ? ''
+                      : created.toLocaleDateString(undefined, {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        });
+
+                    return (
+                      <div
+                        key={review.id}
+                        className="flex items-start gap-3 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2"
+                      >
+                        <div className="flex-shrink-0">
+                          <div className="h-9 w-9 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center text-xs font-semibold">
+                            {initials}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <div className="flex flex-col">
+                              <span className="text-xs font-semibold text-gray-900 truncate">{review.name}</span>
+                              {createdLabel && (
+                                <span className="text-[10px] text-gray-400">{createdLabel}</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 text-[14px]">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <span
+                                  key={star}
+                                  className={`material-symbols-outlined text-[14px] ${
+                                    star <= review.rating ? 'text-orange-500' : 'text-gray-300'
+                                  }`}
+                                >
+                                  {star <= review.rating ? 'star' : 'star_border'}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-700 whitespace-pre-line break-words">
+                            {review.comment}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteReview(review.id)}
+                          disabled={deletingReviewId === review.id}
+                          className="ml-2 flex-shrink-0 rounded-full p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                          title="Delete review"
+                        >
+                          <span className="material-symbols-outlined text-base">
+                            {deletingReviewId === review.id ? 'hourglass_top' : 'delete'}
+                          </span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>

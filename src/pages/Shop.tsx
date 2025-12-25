@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import { useAuth } from '../contexts/AuthContext';
+import { useCart } from '../contexts/CartContext';
+import Toast from '../components/Toast';
 
 interface ProductImage {
   id: number;
@@ -14,6 +17,8 @@ interface ApiProduct {
   name: string;
   price: number;
   discount_price: number | null;
+  average_rating?: number | null;
+  reviews_count?: number;
   images?: ProductImage[];
 }
 
@@ -24,11 +29,16 @@ interface ShopProduct {
   discountPrice: number | null;
   image: string;
   rating: number;
+  ratingCount: number;
 }
 
 type SortOption = 'featured';
 
 const Shop: React.FC = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { setCartFromApiPayload } = useCart();
+
   const [products, setProducts] = useState<ShopProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +46,10 @@ const Shop: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [maxPriceFilter, setMaxPriceFilter] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info' | 'warning';
+  } | null>(null);
 
   const backendOrigin = useMemo(() => {
     try {
@@ -71,8 +85,8 @@ const Shop: React.FC = () => {
     return `${backendOrigin}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
-  const getRatingForProduct = (id: number) => {
-    // Simple deterministic pseudo-rating between 3.0 and 5.0
+  const getFallbackRatingForProduct = (id: number) => {
+    // Simple deterministic pseudo-rating between 3.0 and 5.0 used only when no reviews exist yet
     const base = 3;
     const step = (id % 5) * 0.5;
     return Math.min(5, base + step);
@@ -83,6 +97,26 @@ const Shop: React.FC = () => {
       return p.discountPrice;
     }
     return p.price;
+  };
+
+  const handleAddToCart = async (productId: number) => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const response = await api.post('/cart/items', {
+        user_id: user.id,
+        product_id: productId,
+        quantity: 1,
+      });
+      setCartFromApiPayload(response.data);
+      setToast({ message: 'Product added to your cart.', type: 'success' });
+    } catch (err) {
+      console.error('Error adding item to cart:', err);
+      setToast({ message: 'Failed to add product to cart.', type: 'error' });
+    }
   };
 
   useEffect(() => {
@@ -104,6 +138,11 @@ const Shop: React.FC = () => {
               ? p.images.find((img) => img.is_primary) || p.images[0]
               : undefined;
 
+          const hasRealRating = typeof p.average_rating === 'number' && !Number.isNaN(Number(p.average_rating));
+          const rating = hasRealRating
+            ? Number(p.average_rating)
+            : getFallbackRatingForProduct(p.product_id);
+
           return {
             id: p.product_id,
             name: p.name,
@@ -113,7 +152,8 @@ const Shop: React.FC = () => {
                 ? Number(p.discount_price)
                 : null,
             image: resolveImageUrl(primaryImage?.url),
-            rating: getRatingForProduct(p.product_id),
+            rating,
+            ratingCount: typeof p.reviews_count === 'number' ? p.reviews_count : 0,
           };
         });
 
@@ -219,7 +259,15 @@ const Shop: React.FC = () => {
   };
 
   return (
-    <main className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 md:px-10 py-5">
+    <main className="w-full max-w-screen-xl mx-auto px-4 mt-18 sm:px-6 md:px-10 py-5">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
       {/* Breadcrumbs */}
       <div className="flex flex-wrap gap-2 py-4">
         <Link className="text-gray-500 hover:text-orange-500 text-sm font-medium leading-normal" to="/">
@@ -362,7 +410,9 @@ const Shop: React.FC = () => {
                         </h3>
                         <div className="flex items-center gap-2 mb-3">
                           {renderStars(p.rating)}
-                          <span className="text-xs text-gray-500">{p.rating.toFixed(1)}</span>
+                          <span className="text-xs text-gray-500">
+                            {p.rating.toFixed(1)}{p.ratingCount ? ` (${p.ratingCount})` : ''}
+                          </span>
                         </div>
                         <div className="flex items-end justify-between mb-4">
                           <div className="flex flex-col items-start">
@@ -386,7 +436,11 @@ const Shop: React.FC = () => {
                             </span>
                           )}
                         </div>
-                        <button className="w-full h-12 rounded-xl bg-gray-800 text-white font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2 group/btn">
+                        <button
+                          type="button"
+                          onClick={() => handleAddToCart(p.id)}
+                          className="w-full h-12 rounded-xl bg-gray-800 text-white font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2 group/btn cursor-pointer"
+                        >
                           <span>Add to Cart</span>
                           <span className="material-symbols-outlined text-[18px] group-hover/btn:translate-x-1 transition-transform">
                             shopping_bag

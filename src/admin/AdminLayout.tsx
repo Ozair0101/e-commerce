@@ -1,16 +1,28 @@
 import React, { useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      navigate('/login');
+    }
+  };
 
   const navigation = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: 'dashboard' },
     { name: 'Categories', href: '/admin/categories', icon: 'category' },
     { name: 'Products', href: '/admin/products', icon: 'inventory_2' },
-    { name: 'Orders', href: '#', icon: 'shopping_bag' },
-    { name: 'Customers', href: '#', icon: 'group' },
+    { name: 'Orders', href: '/admin/orders', icon: 'shopping_bag' },
+    { name: 'Payments', href: '/admin/payments', icon: 'credit_card' },
+    { name: 'Customers', href: '/admin/customers', icon: 'group' },
     { name: 'Analytics', href: '#', icon: 'bar_chart' },
   ];
 
@@ -81,6 +93,9 @@ const AdminLayout: React.FC = () => {
               {location.pathname.includes('add-category') && 'Add Category'}
               {location.pathname.includes('products') && !location.pathname.includes('add-product') && 'Products'}
               {location.pathname.includes('add-product') && 'Add Product'}
+              {location.pathname.includes('orders') && 'Orders'}
+              {location.pathname.includes('customers') && 'Customers'}
+              {location.pathname.includes('payments') && 'Payments'}
               {location.pathname.includes('dashboard') && 'Dashboard'}
             </h2>
           </div>
@@ -109,6 +124,14 @@ const AdminLayout: React.FC = () => {
                 <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold">
                   AU
                 </div>
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                <span className="material-symbols-outlined text-[18px]">logout</span>
+                <span className="hidden sm:inline">Logout</span>
               </button>
             </div>
           </div>

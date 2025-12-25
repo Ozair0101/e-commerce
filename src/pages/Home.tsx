@@ -12,10 +12,22 @@ import type { Product } from '../components/ProductCard';
 import type { Category } from '../components/Categories';
 import type { TrendItem } from '../components/TrendingRow';
 import api from '../utils/api';
+import { useAuth } from '../contexts/AuthContext';
+import { useCart } from '../contexts/CartContext';
+import { useNavigate } from 'react-router-dom';
+import Toast from '../components/Toast';
 
 const Home: React.FC = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { setCartFromApiPayload } = useCart();
+
   const [topSellerProducts, setTopSellerProducts] = useState<Product[]>([]);
   const [topSellersLoading, setTopSellersLoading] = useState<boolean>(true);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info' | 'warning';
+  } | null>(null);
 
   interface ApiProductImage {
     id: number;
@@ -28,6 +40,7 @@ const Home: React.FC = () => {
     name: string;
     price: number;
     discount_price: number | null;
+    average_rating?: number | null;
     images?: ApiProductImage[];
   }
 
@@ -65,6 +78,29 @@ const Home: React.FC = () => {
     return `${backendOrigin}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
+  const handleAddTopSellerToCart = async (product: Product) => {
+    const productId = Number(product.id);
+    if (!Number.isFinite(productId)) return;
+
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const response = await api.post('/cart/items', {
+        user_id: user.id,
+        product_id: productId,
+        quantity: 1,
+      });
+      setCartFromApiPayload(response.data);
+      setToast({ message: 'Product added to your cart.', type: 'success' });
+    } catch (err) {
+      console.error('Error adding top seller to cart:', err);
+      setToast({ message: 'Failed to add product to cart.', type: 'error' });
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -87,11 +123,14 @@ const Home: React.FC = () => {
               ? p.discount_price
               : p.price;
 
+          const hasRealRating = typeof p.average_rating === 'number' && !Number.isNaN(Number(p.average_rating));
+          const rating = hasRealRating ? Number(p.average_rating) : 4.5;
+
           return {
             id: String(p.product_id),
             title: p.name,
             price: `$${Number(finalPrice).toFixed(2)}`,
-            rating: 4.5,
+            rating,
             image: resolveImageUrl(primaryImage?.url),
           };
         });
@@ -112,33 +151,6 @@ const Home: React.FC = () => {
       isMounted = false;
     };
   }, [backendOrigin]);
-
-  // const categories: Category[] = [
-  //   {
-  //     id: 'c1',
-  //     name: 'Electronics',
-  //     image:
-  //       'https://lh3.googleusercontent.com/aida-public/AB6AXuBbI4LlRLHqKg0JQL803dE6HXZjs0Qwl-adV7Ikag6epfRmRS9wcyO_eQsDQSZv5bIbbuxhuGd7ZtSREUE8xY0atYsU1AiGq6CBbVHuTx-RvmYhHL0v7I5Q2fTw1qaV1vnfPkgitFitpsYMy7yQCw2wz3S7MP3bpoiTBYQ-50PfHVT2C85hVw5LrMCEdrZpp9N4BQERA6Nk3yKPz-VeUyzrpAwCh-8GpZoDLzbUKvFAPPzmfw8Hh6WTzcdmHx7fatIfLQ4LFQh2hFA',
-  //   },
-  //   {
-  //     id: 'c2',
-  //     name: 'Home & Kitchen',
-  //     image:
-  //       'https://lh3.googleusercontent.com/aida-public/AB6AXuBEBToWYF5PhRf7fJbxG6MATAEjdEhIpjso6vJTrv6P1NAn9OEOBSjBkM9lbBAO1n0ehwG9vozAYOUYY32tyrjPsM8_lpuT37tCPc2xIcNOV0UDWkrCXGWuKbga8Pa8y-7dc9XXZdvLu6E0Xd_UX-JoDNlsPzuVqWETUUYUhDvmHf459PasWkk8xIlnfJq7ktpcPKDuxsFFQc-aJyH0ThrVyDhri9P9rhHoYAI0IeTmrbx1g3ovaCAJELXh3gpIXrBps2IQ3C5bDoo',
-  //   },
-  //   {
-  //     id: 'c3',
-  //     name: 'Fashion',
-  //     image:
-  //       'https://lh3.googleusercontent.com/aida-public/AB6AXuBWpX5r4VLm-LXUq9Qg2YyF7K6TA_e-cy30AkBgLMxMy282kKbZrUUap7-0d5WLYVhq8SrdpRnntO-B9jM1cBt_3fdNoN9kz7G2u_hULiLHnaDmTBG9lqi2qPSsvZFJwCyIQtjoSnXrj2iMeJglIQCg0Q6Z7cNvvvoLJLxchkSbn-EvqmRRXFdqKJdt95kFGpAFtP_ntzkhQNeTfBqUrNyaLtXzw6aiswShIRwiPzufIYFpc-nF-nP9HV2rpF7_YY940z8RkG-9e_c',
-  //   },
-  //   {
-  //     id: 'c4',
-  //     name: 'Books',
-  //     image:
-  //       'https://lh3.googleusercontent.com/aida-public/AB6AXuDcg3wKOyc6aIalRW8x-QWIdo0-zRIa0DuOp9FI2Q1-hgEmhMwGhUnk1OI9JgNDMGxKi5NbIRHcAICd1a4LoVOeQxuCrVDagNDVtMAigADTRW2v0grvuatriJlVgWStuwdEleTUjKJZIUBsW6JZPo1RY7U4PswY9Ot8Awt2YfTz1pcByyJEI2L4GFQsOoiaRGZijvPGYGINSC-jPVp7abSFkfLyVBTPyUZi9xuHHW2g6LA9G9-Qe8Y2Nu_fK-tubqBLjl_YHlqYkes',
-  //   },
-  // ];
 
   const trending: TrendItem[] = [
     {
@@ -171,7 +183,14 @@ const Home: React.FC = () => {
     'https://lh3.googleusercontent.com/aida-public/AB6AXuC0s4BvKN-irQp4V2kl0BnRhzJEk23E-h5M8chj1EUlbQgEnOs02XBYRIvSFrE91oi1Cqdg9cu958ySBxbUxSWJyUq2Cg2ty54V_Nofxk7-GL435ctSzb7lOEzAs8UdZt_hdyZIZV_iDX-lirQU0SobXjGfdeUq9WNHIRX9lxlSTDXZ_6Id95HEp9ve55defGOhYmCZOXso73sm82IRMKQ75fkPLuGq1wN-1y7QsYQJftOvaxGvaPdxJqu0cHDbJECiAXRc1QaA_Bg';
 
   return (
-    <div className="flex w-full flex-1 flex-col items-center">
+    <div className="flex w-full flex-1 flex-col items-center mt-16">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
       <div className="flex w-full max-w-7xl flex-col">
         {/* Hero Section */}
         <HeroSection />
@@ -181,7 +200,11 @@ const Home: React.FC = () => {
           image={carouselImage}
         /> */}
         <Feature />
-        <TopSellers products={topSellerProducts} loading={topSellersLoading} />
+        <TopSellers
+          products={topSellerProducts}
+          loading={topSellersLoading}
+          onAddToCart={handleAddTopSellerToCart}
+        />
         {/* <Categories categories={categories} /> */}
         <PromoBanner title="Limited-Time Offers" subtitle="Get ready for our seasonal sale event!" image={promoImage} />
         <TrendingRow items={trending} />

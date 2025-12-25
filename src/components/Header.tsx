@@ -1,11 +1,24 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { itemCount } = useCart();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      navigate('/login');
+    }
+  };
 
   return (
-    <header className="sticky top-0 z-50 flex w-full flex-col items-center bg-white text-gray-800 border-b border-gray-200">
+    <header className="fixed top-0 left-0 z-50 flex w-full flex-col items-center bg-white text-gray-800 border-b border-gray-200">
       <div className="flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-2">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-4xl text-orange-500">storefront</span>
@@ -41,20 +54,37 @@ const Header: React.FC = () => {
           </label>
         </div>
         <div className="flex items-center justify-end gap-4">
-          <Link to="/admin/dashboard" className="hidden lg:flex items-center rounded px-2 py-1 text-left hover:bg-gray-100">
-            <span className="text-sm font-bold text-gray-800">Admin</span>
-          </Link>
-          <button className="hidden flex-col items-start rounded px-2 py-1 text-left hover:bg-gray-100 sm:flex">
-            <span className="text-xs font-normal text-gray-600">Hello, sign in</span>
-            <span className="text-sm font-bold text-gray-800">Account & Lists</span>
-          </button>
-          <button className="flex items-end gap-1 rounded px-2 py-1 hover:bg-gray-100">
+          {user?.role === 'admin' && (
+            <Link to="/admin/dashboard" className="hidden lg:flex items-center rounded px-2 py-1 text-left hover:bg-gray-100">
+              <span className="text-sm font-bold text-gray-800">Admin</span>
+            </Link>
+          )}
+          {user ? (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="hidden sm:flex flex-col items-start rounded px-2 py-1 text-left hover:bg-gray-100"
+            >
+              <span className="text-xs font-normal text-gray-600">Hello, {user.name}</span>
+              <span className="text-sm font-bold text-gray-800">Logout</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className="hidden flex-col cursor-pointer items-start rounded px-2 py-1 text-left hover:bg-gray-100 sm:flex"
+            >
+              <span className="text-xs font-normal text-gray-600">Hello, sign in</span>
+              <span className="text-sm font-bold text-gray-800">Account & Lists</span>
+            </button>
+          )}
+          <Link to="/cart" className="flex items-end gap-1 rounded px-2 py-1 hover:bg-gray-100">
             <div className="relative">
               <span className="material-symbols-outlined text-3xl">shopping_cart</span>
-              <span className="absolute -right-1 top-0 text-base font-bold text-orange-500">0</span>
+              <span className="absolute -right-5 -top-1 text-base font-bold text-orange-500">{itemCount}</span>
             </div>
             <span className="hidden text-sm font-bold text-gray-800 lg:block">Cart</span>
-          </button>
+          </Link>
         </div>
       </div>
       
@@ -79,8 +109,11 @@ const Header: React.FC = () => {
       {/* Desktop Navigation */}
       <div className="hidden w-full max-w-7xl items-center gap-6 px-4 pb-2 pt-1 text-sm font-medium lg:flex">
         <Link className="rounded px-1 hover:bg-gray-100 text-gray-700" to="/">Home</Link>
-        <Link className="rounded px-1 hover:bg-gray-100 text-gray-700" to="/about">About</Link>
         <Link className="rounded px-1 hover:bg-gray-100 text-gray-700" to="/shop">Shop</Link>
+        <Link className="rounded px-1 hover:bg-gray-100 text-gray-700" to="/about">About</Link>
+        {user?.role === 'admin' && (
+          <Link className="rounded px-1 hover:bg-gray-100 text-gray-700" to="/admin/dashboard">Admin Dashboard</Link>
+        )}
       </div>
       
       {/* Mobile Navigation Menu */}
@@ -96,13 +129,6 @@ const Header: React.FC = () => {
             </Link>
             <Link 
               className="py-2 px-1 hover:bg-gray-100 text-gray-700 rounded" 
-              to="/about" 
-              onClick={() => setIsMenuOpen(false)}
-            >
-              About
-            </Link>
-            <Link 
-              className="py-2 px-1 hover:bg-gray-100 text-gray-700 rounded" 
               to="/shop" 
               onClick={() => setIsMenuOpen(false)}
             >
@@ -110,11 +136,20 @@ const Header: React.FC = () => {
             </Link>
             <Link 
               className="py-2 px-1 hover:bg-gray-100 text-gray-700 rounded" 
-              to="/admin/dashboard" 
+              to="/about" 
               onClick={() => setIsMenuOpen(false)}
             >
-              Admin Dashboard
+              About
             </Link>
+            {user?.role === 'admin' && (
+              <Link 
+                className="py-2 px-1 hover:bg-gray-100 text-gray-700 rounded" 
+                to="/admin/dashboard" 
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Admin Dashboard
+              </Link>
+            )}
             <div className="pt-2 mt-2 border-t border-gray-200">
               <button className="w-full flex flex-col items-start rounded px-1 py-2 text-left hover:bg-gray-100">
                 <span className="text-xs font-normal text-gray-600">Returns</span>
