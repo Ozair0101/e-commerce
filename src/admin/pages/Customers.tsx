@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
 
 interface Customer {
@@ -14,6 +15,7 @@ const CustomersPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -60,20 +62,30 @@ const CustomersPage: React.FC = () => {
     <div className="min-h-full bg-gray-50">
       <div className="mx-auto px-6 py-8">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-4">
+          <div className="px-6 py-4 border-b border-gray-100 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-lg font-semibold text-gray-900">Customers</h1>
               <p className="text-sm text-gray-500 mt-0.5">Manage all registered customers</p>
             </div>
-            <div className="w-56">
-              <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by name, email, ID"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:border-orange-500"
-              />
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+              <div className="flex-1 sm:flex-none sm:w-56">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search by name, email, ID"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:border-orange-500"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/admin/add-user')}
+                className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-orange-500 text-white text-sm font-semibold shadow-sm hover:bg-orange-600"
+              >
+                <span className="material-symbols-outlined text-[18px] mr-1">person_add</span>
+                Add User
+              </button>
             </div>
           </div>
 
