@@ -192,7 +192,7 @@ const ProductDetailPage: React.FC = () => {
         />
       )}
 
-      <div className="max-w-6xl mx-auto flex flex-col gap-6">
+      <div className="mx-auto flex flex-col gap-6">
         {/* Breadcrumb and header */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 pb-4">
           <div className="flex flex-col gap-2">
