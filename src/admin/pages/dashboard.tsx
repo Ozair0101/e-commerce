@@ -278,7 +278,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto flex flex-col gap-8 pb-10">
+      <div className="mx-auto flex flex-col gap-8 pb-10">
         {/* Page Heading & Date Filter */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
